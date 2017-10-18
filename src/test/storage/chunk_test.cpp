@@ -36,7 +36,21 @@ TEST_F(StorageChunkTest, AddColumnToChunk) {
   EXPECT_EQ(c.size(), 3u);
 }
 
-// TODO(Florian): check appending columns with wrong sizes
+
+TEST_F(StorageChunkTest, AddColumnOfWrongSize) {
+  if (IS_DEBUG) {
+    c.add_column(vc_int);
+    auto vc_too_large = make_shared_by_column_type<BaseColumn, ValueColumn>("int");
+    auto vc_too_small = make_shared_by_column_type<BaseColumn, ValueColumn>("int");
+    for (auto i = 0; i < 4; ++i) {
+      vc_too_large->append(i);
+    }
+
+    EXPECT_THROW(c.add_column(vc_too_large), std::exception);
+    EXPECT_THROW(c.add_column(vc_too_small), std::exception);
+  }
+}
+
 
 TEST_F(StorageChunkTest, AddValuesToChunk) {
   c.add_column(vc_int);

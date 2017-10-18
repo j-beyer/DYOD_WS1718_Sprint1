@@ -24,21 +24,17 @@ void Chunk::append(std::vector<AllTypeVariant> values) {
   for (size_t i = 0; i < values.size(); i++) {
     m_columns[i]->append(values[i]);
   }
-  // Implementation goes here
 }
 
 std::shared_ptr<BaseColumn> Chunk::get_column(ColumnID column_id) const {
-  // Implementation goes here
   return m_columns.at(column_id);
 }
 
 uint16_t Chunk::col_count() const {
-  // Implementation goes here
   return m_columns.size();
 }
 
 uint32_t Chunk::size() const {
-  // Implementation goes here
   if (col_count() == 0) {
     return 0;
   }
