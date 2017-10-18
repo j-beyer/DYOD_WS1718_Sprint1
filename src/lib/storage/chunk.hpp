@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // the linter wants this to be above everything else
 #include <shared_mutex>
@@ -47,6 +47,7 @@ class Chunk : private Noncopyable {
 
  protected:
   // Implementation goes here
+  std::vector<std::shared_ptr<BaseColumn>> m_columns;
 };
 
 }  // namespace opossum
