@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <memory>
 #include <string>
@@ -13,6 +13,8 @@ namespace opossum {
 template <typename T>
 class ValueColumn : public BaseColumn {
  public:
+  // default constructor is auto generated
+
   // return the value at a certain position. If you want to write efficient operators, back off!
   const AllTypeVariant operator[](const size_t i) const override;
 
@@ -23,6 +25,7 @@ class ValueColumn : public BaseColumn {
   size_t size() const override;
 
  protected:
+  std::vector<T> m_values;
   // Implementation goes here
 };
 
