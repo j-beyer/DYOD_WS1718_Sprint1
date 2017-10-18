@@ -23,7 +23,6 @@ const AllTypeVariant ValueColumn<T>::operator[](const size_t i) const {
 
 template <typename T>
 void ValueColumn<T>::append(const AllTypeVariant& val) {
-
   m_values.push_back(type_cast<T>(val));
 }
 
