@@ -32,7 +32,7 @@ void Table::add_column(const std::string& name, const std::string& type) {
 }
 
 void Table::append(std::vector<AllTypeVariant> values) {
-  if (m_chunks.size() == 0 || m_chunks.back().size() >= chunk_size()) {
+  if (m_chunks.back().size() >= chunk_size()) {
     create_new_chunk();
   }
   m_chunks.back().append(values);
@@ -40,17 +40,15 @@ void Table::append(std::vector<AllTypeVariant> values) {
 
 void Table::create_new_chunk() {
   m_chunks.push_back(Chunk());
-  // TODO(florian): add the needed columns to the chunk
+  Chunk& last_chunk = m_chunks.back();
+  for (auto& column_type : m_column_types) {
+    last_chunk.add_column(make_shared_by_column_type<BaseColumn, ValueColumn>(column_type));
+  }
 }
 
 uint16_t Table::col_count() const { return m_column_names.size(); }
 
-uint64_t Table::row_count() const {
-  if (m_chunks.size() == 0) {
-    return 0;
-  }
-  return (chunk_count() - 1) * chunk_size() + m_chunks.back().size();
-}
+uint64_t Table::row_count() const { return (chunk_count() - 1) * chunk_size() + m_chunks.back().size(); }
 
 ChunkID Table::chunk_count() const {
   ChunkID ret = static_cast<ChunkID>(m_chunks.size());
@@ -63,26 +61,19 @@ ColumnID Table::column_id_by_name(const std::string& column_name) const {
       return static_cast<ColumnID>(id);
     }
   }
-  // TODO(florian): find out what to do when the column does not exist (do ids start at 0?)
-  return ColumnID{0};
+  throw std::runtime_error("column does not exist");
 }
 
 uint32_t Table::chunk_size() const { return m_chunk_size; }
 
-const std::vector<std::string>& Table::column_names() const {
-  throw std::runtime_error("Implement Table::column_names()");
-}
+const std::vector<std::string>& Table::column_names() const { return m_column_names; }
 
-const std::string& Table::column_name(ColumnID column_id) const {
-  throw std::runtime_error("Implement Table::column_name");
-}
+const std::string& Table::column_name(ColumnID column_id) const { return m_column_names.at(column_id); }
 
-const std::string& Table::column_type(ColumnID column_id) const {
-  throw std::runtime_error("Implement Table::column_type");
-}
+const std::string& Table::column_type(ColumnID column_id) const { return m_column_types.at(column_id); }
 
-Chunk& Table::get_chunk(ChunkID chunk_id) { throw std::runtime_error("Implement Table::get_chunk"); }
+Chunk& Table::get_chunk(ChunkID chunk_id) { return m_chunks.at(chunk_id); }
 
-const Chunk& Table::get_chunk(ChunkID chunk_id) const { throw std::runtime_error("Implement Table::get_chunk"); }
+const Chunk& Table::get_chunk(ChunkID chunk_id) const { return m_chunks.at(chunk_id); }
 
 }  // namespace opossum
