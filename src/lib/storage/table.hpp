@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <map>
 #include <memory>
@@ -77,6 +77,10 @@ class Table : private Noncopyable {
   void create_new_chunk();
 
  protected:
-  // Implementation goes here
+  // first is name, second is type
+  std::vector<std::string> m_column_names;
+  std::vector<std::string> m_column_types;
+  std::vector<Chunk> m_chunks;
+  uint32_t m_chunk_size;
 };
 }  // namespace opossum
