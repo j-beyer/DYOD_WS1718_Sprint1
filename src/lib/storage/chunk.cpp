@@ -15,16 +15,12 @@
 namespace opossum {
 
 void Chunk::add_column(std::shared_ptr<BaseColumn> column) {
-  if (column->size() != this->size() && m_columns.size() > 0) {
-    throw std::runtime_error("column size does not match chunk size");
-  }
+  DebugAssert(column->size() != this->size() && m_columns.size() > 0, "column size does not match chunk size");
   m_columns.push_back(column);
 }
 
 void Chunk::append(std::vector<AllTypeVariant> values) {
-  if (values.size() != m_columns.size()) {
-    throw std::runtime_error("number of given values does not match number of columns");
-  }
+  DebugAssert(values.size() != m_columns.size(), "number of given values does not match number of columns");
   for (size_t i = 0; i < values.size(); i++) {
     m_columns[i]->append(values[i]);
   }
