@@ -3,8 +3,8 @@
 #include <iostream>
 #include <memory>
 #include <string>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 #include "storage/table.hpp"
 #include "types.hpp"
@@ -47,7 +47,7 @@ class StorageManager : private Noncopyable {
 
   static StorageManager instance;
 
-  // This is probably overkill unless there are many tables
+  // slightly faster than map
   std::unordered_map<std::string, std::shared_ptr<Table>> m_tables;
 };
 }  // namespace opossum

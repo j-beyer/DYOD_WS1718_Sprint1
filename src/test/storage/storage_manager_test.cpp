@@ -1,4 +1,7 @@
 ﻿#include <memory>
+#include <sstream>
+#include <string>
+#include <vector>
 
 #include "../base_test.hpp"
 #include "gtest/gtest.h"
@@ -48,6 +51,26 @@ TEST_F(StorageStorageManagerTest, DoesNotHaveTable) {
 TEST_F(StorageStorageManagerTest, HasTable) {
   auto& sm = StorageManager::get();
   EXPECT_EQ(sm.has_table("first_table"), true);
+}
+
+TEST_F(StorageStorageManagerTest, TableNames) {
+  auto& sm = StorageManager::get();
+  auto names = sm.table_names();
+  EXPECT_EQ(names.size(), 2u);
+  EXPECT_EQ(names.front(), "first_table");
+  EXPECT_EQ(names.back(), "second_table");
+
+  // as we use an unordered_map, we cannot test for first/second element, just for containment
+  // EXPECT_EQ(std::find(names.begin(), names.end(), "first_table") == names.end(), false);
+  // EXPECT_EQ(std::find(names.begin(), names.end(), "second_table") == names.end(), false);
+}
+
+TEST_F(StorageStorageManagerTest, Print) {
+  auto& sm = StorageManager::get();
+  auto stream = std::ostringstream{};
+  sm.print(stream);
+  auto str = stream.str();
+  EXPECT_EQ(str, "Tables: \nfirst_table\nsecond_table\n\n");
 }
 
 }  // namespace opossum
