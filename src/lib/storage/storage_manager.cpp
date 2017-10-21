@@ -10,8 +10,6 @@
 
 namespace opossum {
 
-StorageManager::StorageManager() {}
-
 StorageManager& StorageManager::get() {
   static StorageManager instance;
   return instance;

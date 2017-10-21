@@ -32,8 +32,7 @@ class StorageManager : private Noncopyable {
   // returns a list of all table names
   std::vector<std::string> table_names() const;
 
-  // prints the table on the given stream
-  // returning the number of columns, rows, and chunks
+  // prints information about all tables in the storage manager (name, #columns, #rows, #chunks)
   void print(std::ostream& out = std::cout) const;
 
   // deletes the entire StorageManager and creates a new one, used especially in tests
@@ -42,11 +41,14 @@ class StorageManager : private Noncopyable {
   StorageManager(StorageManager&&) = delete;
 
  protected:
-  StorageManager();
+  StorageManager() {}
+
+  StorageManager& operator=(StorageManager&&) = default;
 
   static StorageManager instance;
 
   // This is probably overkill unless there are many tables
   std::unordered_map<std::string, std::shared_ptr<Table>> m_tables;
+
 };
 }  // namespace opossum
