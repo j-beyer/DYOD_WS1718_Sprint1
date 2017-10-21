@@ -15,6 +15,8 @@
 namespace opossum {
 
 void Chunk::add_column(std::shared_ptr<BaseColumn> column) {
+  // if the chunk is empty, always allow adding a new column
+  // otherwise, only allow if column size matches
   DebugAssert(column->size() == this->size() || m_columns.size() == 0, "column size does not match chunk size");
   m_columns.push_back(column);
 }
@@ -38,6 +40,8 @@ uint32_t Chunk::size() const {
   if (col_count() == 0) {
     return 0;
   }
+  // because append() adds one value to each column, all columns have the same size
+  // so we can just return the size of the first column
   return m_columns.at(0)->size();
 }
 
