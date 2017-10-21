@@ -32,7 +32,7 @@ void Table::add_column(const std::string& name, const std::string& type) {
 }
 
 void Table::append(std::vector<AllTypeVariant> values) {
-  if (m_chunks.back().size() >= chunk_size()) {
+  if (is_last_chunk_full()) {
     create_new_chunk();
   }
   m_chunks.back().append(values);
@@ -50,15 +50,12 @@ uint16_t Table::col_count() const { return m_column_names.size(); }
 
 uint64_t Table::row_count() const { return (chunk_count() - 1) * chunk_size() + m_chunks.back().size(); }
 
-ChunkID Table::chunk_count() const {
-  ChunkID ret = static_cast<ChunkID>(m_chunks.size());
-  return ret;
-}
+ChunkID Table::chunk_count() const { return ChunkID{static_cast<uint32_t>(m_chunks.size())}; }
 
 ColumnID Table::column_id_by_name(const std::string& column_name) const {
-  for (size_t id = 0; id < m_column_names.size(); id++) {
+  for (uint16_t id = 0; id < col_count(); id++) {
     if (m_column_names[id] == column_name) {
-      return static_cast<ColumnID>(id);
+      return ColumnID{id};
     }
   }
   throw std::runtime_error("column does not exist");
@@ -76,4 +73,7 @@ Chunk& Table::get_chunk(ChunkID chunk_id) { return m_chunks.at(chunk_id); }
 
 const Chunk& Table::get_chunk(ChunkID chunk_id) const { return m_chunks.at(chunk_id); }
 
+bool Table::is_last_chunk_full() const { return !has_infinite_chunk_size() && m_chunks.back().size() == m_chunk_size; }
+
+bool Table::has_infinite_chunk_size() const { return m_chunk_size == 0; }
 }  // namespace opossum

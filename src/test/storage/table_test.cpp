@@ -30,6 +30,20 @@ TEST_F(StorageTableTest, ChunkCount) {
   EXPECT_EQ(t.chunk_count(), 2u);
 }
 
+TEST_F(StorageTableTest, ChunkCountInfiniteSize) {
+  auto t_inf = Table{};
+  EXPECT_EQ(t_inf.chunk_size(), 0u);
+
+  t_inf.add_column("col_1", "int");
+  EXPECT_EQ(t_inf.chunk_count(), 1u);
+
+  t_inf.append({1});
+  t_inf.append({2});
+  t_inf.append({3});
+  EXPECT_EQ(t_inf.chunk_count(), 1u);
+  EXPECT_EQ(t_inf.row_count(), 3u);
+}
+
 TEST_F(StorageTableTest, GetChunk) {
   t.get_chunk(ChunkID{0});
   // TODO(anyone): Do we want checks here?

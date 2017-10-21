@@ -77,10 +77,13 @@ class Table : private Noncopyable {
   void create_new_chunk();
 
  protected:
-  // first is name, second is type
   std::vector<std::string> m_column_names;
   std::vector<std::string> m_column_types;
   std::vector<Chunk> m_chunks;
   uint32_t m_chunk_size;
+
+ private:
+  bool is_last_chunk_full() const;
+  bool has_infinite_chunk_size() const;
 };
 }  // namespace opossum
