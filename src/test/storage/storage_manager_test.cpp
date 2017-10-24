@@ -59,18 +59,15 @@ TEST_F(StorageStorageManagerTest, TableNames) {
   EXPECT_EQ(names.size(), 2u);
   EXPECT_EQ(names.front(), "first_table");
   EXPECT_EQ(names.back(), "second_table");
-
-  // as we use an unordered_map, we cannot test for first/second element, just for containment
-  // EXPECT_EQ(std::find(names.begin(), names.end(), "first_table") == names.end(), false);
-  // EXPECT_EQ(std::find(names.begin(), names.end(), "second_table") == names.end(), false);
 }
 
 TEST_F(StorageStorageManagerTest, Print) {
   auto& sm = StorageManager::get();
+  sm.drop_table("second_table");
   auto stream = std::ostringstream{};
   sm.print(stream);
   auto str = stream.str();
-  EXPECT_EQ(str, "Tables: \nfirst_table\nsecond_table\n\n");
+  EXPECT_EQ(str, "name: first_table\t#columns: 0\t#rows: 0\t#chunks: 1\tchunk size: 0\n\n");
 }
 
 }  // namespace opossum

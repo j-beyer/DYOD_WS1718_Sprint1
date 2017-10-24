@@ -32,10 +32,11 @@ TEST_F(StorageTableTest, ChunkCount) {
 
 TEST_F(StorageTableTest, ChunkCountInfiniteSize) {
   auto t_inf = Table{};
+  EXPECT_EQ(t_inf.chunk_count(), 1u);
   EXPECT_EQ(t_inf.chunk_size(), 0u);
 
   t_inf.add_column("col_1", "int");
-  EXPECT_EQ(t_inf.chunk_count(), 1u);
+  EXPECT_EQ(t_inf.col_count(), 1u);
 
   t_inf.append({1});
   t_inf.append({2});
@@ -85,4 +86,19 @@ TEST_F(StorageTableTest, GetColumnIdByName) {
 
 TEST_F(StorageTableTest, GetChunkSize) { EXPECT_EQ(t.chunk_size(), 2u); }
 
+TEST_F(StorageTableTest, AddExistingColumnDefinition) {
+  if (IS_DEBUG) {
+    EXPECT_THROW(t.add_column_definition("col_1", "int"), std::exception);
+  }
+}
+
+TEST_F(StorageTableTest, AddColumnOfWrongType) {
+  t.add_column_definition("col_3", "int");
+  EXPECT_THROW(t.add_column("col_3", "string"), std::exception);
+}
+
+TEST_F(StorageTableTest, AddColumnTwice) {
+  t.add_column("col_3", "int");
+  EXPECT_THROW(t.add_column("col_3", "int"), std::exception);
+}
 }  // namespace opossum

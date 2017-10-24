@@ -77,6 +77,7 @@ class Table : private Noncopyable {
   void create_new_chunk();
 
  protected:
+  std::vector<bool> m_is_instantiated;
   std::vector<std::string> m_column_names;
   std::vector<std::string> m_column_types;
   std::vector<Chunk> m_chunks;
@@ -85,5 +86,7 @@ class Table : private Noncopyable {
  private:
   bool is_last_chunk_full() const;
   bool has_infinite_chunk_size() const;
+  bool has_definition(const std::string& name) const;
+  bool is_new_column_valid(const std::string& name, const std::string& type) const;
 };
 }  // namespace opossum
