@@ -28,7 +28,6 @@ void ValueColumn<T>::append(const AllTypeVariant& val) {
 
 template <typename T>
 size_t ValueColumn<T>::size() const {
-  // Implementation goes here
   return m_values.size();
 }
 
