@@ -28,21 +28,17 @@ void Chunk::append(std::vector<AllTypeVariant> values) {
   }
 }
 
-std::shared_ptr<BaseColumn> Chunk::get_column(ColumnID column_id) const {
-  return m_columns.at(column_id);
-}
+std::shared_ptr<BaseColumn> Chunk::get_column(ColumnID column_id) const { return m_columns.at(column_id); }
 
-uint16_t Chunk::col_count() const {
-  return m_columns.size();
-}
+uint16_t Chunk::col_count() const { return m_columns.size(); }
 
 uint32_t Chunk::size() const {
   if (col_count() == 0) {
     return 0;
   }
-  // because append() adds one value to each column, all columns have the same size
+  // all columns have the same size (as per add_column() and append() implementation)
   // so we can just return the size of the first column
-  return m_columns.at(0)->size();
+  return m_columns[0]->size();
 }
 
 }  // namespace opossum

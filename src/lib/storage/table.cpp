@@ -30,7 +30,7 @@ void Table::add_column(const std::string& name, const std::string& type) {
   if (!has_definition(name)) {
     add_column_definition(name, type);
   } else {
-    DebugAssert(is_new_column_valid(name, type), "column already exists");
+    validate_existing_definition(name, type);
   }
   for (Chunk& chunk : m_chunks) {
     chunk.add_column(make_shared_by_column_type<BaseColumn, ValueColumn>(type));
@@ -89,16 +89,17 @@ bool Table::has_definition(const std::string& name) const {
   return std::find(m_column_names.begin(), m_column_names.end(), name) != m_column_names.end();
 }
 
-bool Table::is_new_column_valid(const std::string& name, const std::string& type) const {
+void Table::validate_existing_definition(const std::string& name, const std::string& type) const {
   auto it = std::find(m_column_names.begin(), m_column_names.end(), name);
   auto pos = it - m_column_names.begin();
+
   auto existing_type = m_column_types.at(pos);
   if (existing_type != type) {
-    return false;
+    throw std::runtime_error("a column definition with the same name but a different type was already added");
   }
+
   if (m_is_instantiated.at(pos)) {
-    return false;
+    throw std::runtime_error("a column with the given name was already added");
   }
-  return true;
 }
 }  // namespace opossum

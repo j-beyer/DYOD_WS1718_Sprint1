@@ -87,6 +87,6 @@ class Table : private Noncopyable {
   bool is_last_chunk_full() const;
   bool has_infinite_chunk_size() const;
   bool has_definition(const std::string& name) const;
-  bool is_new_column_valid(const std::string& name, const std::string& type) const;
+  void validate_existing_definition(const std::string& name, const std::string& type) const;
 };
 }  // namespace opossum

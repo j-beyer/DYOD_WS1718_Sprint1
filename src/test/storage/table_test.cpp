@@ -87,9 +87,7 @@ TEST_F(StorageTableTest, GetColumnIdByName) {
 TEST_F(StorageTableTest, GetChunkSize) { EXPECT_EQ(t.chunk_size(), 2u); }
 
 TEST_F(StorageTableTest, AddExistingColumnDefinition) {
-  if (IS_DEBUG) {
-    EXPECT_THROW(t.add_column_definition("col_1", "int"), std::exception);
-  }
+  EXPECT_THROW(t.add_column_definition("col_1", "int"), std::exception);
 }
 
 TEST_F(StorageTableTest, AddColumnOfWrongType) {

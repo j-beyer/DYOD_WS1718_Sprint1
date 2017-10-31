@@ -26,7 +26,7 @@ void StorageManager::drop_table(const std::string& name) {
   if (!has_table(name)) {
     throw std::runtime_error("the table '" + name + "' does not exist");
   }
-  m_tables.erase(m_tables.find(name));
+  m_tables.erase(name);
 }
 
 std::shared_ptr<Table> StorageManager::get_table(const std::string& name) const {
@@ -45,7 +45,8 @@ std::vector<std::string> StorageManager::table_names() const {
   std::vector<std::string> names;
   names.reserve(m_tables.size());
 
-  auto get_name = [](auto entry) { return entry.first; };
+  // extract name keys from m_tables map
+  auto get_name = [](const auto& entry) { return entry.first; };
   std::transform(m_tables.begin(), m_tables.end(), std::back_inserter(names), get_name);
 
   // sort the names, because it makes it easier for the user to read
