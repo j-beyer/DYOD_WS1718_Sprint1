@@ -47,13 +47,17 @@ std::vector<std::string> StorageManager::table_names() const {
 
   auto get_name = [](auto entry) { return entry.first; };
   std::transform(m_tables.begin(), m_tables.end(), std::back_inserter(names), get_name);
+
+  // sort the names, because it makes it easier for the user to read
+  // assuming that table_names() is only called to display the table names to the user,
+  // and assuming that there is a normal amount of tables, this should not be too expensive
   std::sort(names.begin(), names.end());
   return names;
 }
 
 void StorageManager::print(std::ostream& out) const {
-  for (auto& name : table_names()) {
-    auto table = get_table(name);
+  for (const auto& name : table_names()) {
+    const auto table = get_table(name);
     out << "name: " << name;
     out << "\t#columns: " << table->col_count();
     out << "\t#rows: " << table->row_count();
@@ -65,8 +69,7 @@ void StorageManager::print(std::ostream& out) const {
 
 void StorageManager::reset() {
   auto& instance = get();
-  instance.~StorageManager();
-  new (&instance) StorageManager{};
+  instance = StorageManager{};
 }
 
 }  // namespace opossum

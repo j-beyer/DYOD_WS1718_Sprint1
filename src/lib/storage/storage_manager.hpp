@@ -45,8 +45,6 @@ class StorageManager : private Noncopyable {
 
   StorageManager& operator=(StorageManager&&) = default;
 
-  static StorageManager instance;
-
   // slightly faster than map
   std::unordered_map<std::string, std::shared_ptr<Table>> m_tables;
 };
