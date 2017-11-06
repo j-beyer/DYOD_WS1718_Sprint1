@@ -103,4 +103,7 @@ void Table::validate_existing_definition(const std::string& name, const std::str
   if (_is_instantiated.at(pos)) {
     throw std::runtime_error("a column with the given name was already added");
   }
+
+}
+
 }  // namespace opossum
