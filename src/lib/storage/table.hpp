@@ -80,11 +80,11 @@ class Table : private Noncopyable {
   void create_new_chunk();
 
  protected:
-  std::vector<bool> m_is_instantiated;
-  std::vector<std::string> m_column_names;
-  std::vector<std::string> m_column_types;
-  std::vector<Chunk> m_chunks;
-  uint32_t m_chunk_size;
+  std::vector<bool> _is_instantiated;
+  std::vector<std::string> _column_names;
+  std::vector<std::string> _column_types;
+  std::vector<Chunk> _chunks;
+  uint32_t _chunk_size;
 
  private:
   bool is_last_chunk_full() const;

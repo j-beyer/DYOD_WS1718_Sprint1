@@ -17,13 +17,13 @@
 
 namespace opossum {
 
-Table::Table(const uint32_t chunk_size) : m_chunk_size{chunk_size} { create_new_chunk(); }
+Table::Table(const uint32_t chunk_size) : _chunk_size{chunk_size} { create_new_chunk(); }
 
 void Table::add_column_definition(const std::string& name, const std::string& type) {
   DebugAssert(!has_definition(name), "column definition already exists");
-  m_column_names.push_back(name);
-  m_column_types.push_back(type);
-  m_is_instantiated.push_back(false);
+  _column_names.push_back(name);
+  _column_types.push_back(type);
+  _is_instantiated.push_back(false);
 }
 
 void Table::add_column(const std::string& name, const std::string& type) {
@@ -32,73 +32,75 @@ void Table::add_column(const std::string& name, const std::string& type) {
   } else {
     validate_existing_definition(name, type);
   }
-  for (Chunk& chunk : m_chunks) {
+  for (Chunk& chunk : _chunks) {
     chunk.add_column(make_shared_by_column_type<BaseColumn, ValueColumn>(type));
   }
-  m_is_instantiated.at(column_id_by_name(name)) = true;
+  _is_instantiated.at(column_id_by_name(name)) = true;
 }
 
 void Table::append(std::vector<AllTypeVariant> values) {
   if (is_last_chunk_full()) {
     create_new_chunk();
   }
-  m_chunks.back().append(values);
+  _chunks.back().append(values);
 }
 
 void Table::create_new_chunk() {
-  m_chunks.push_back(Chunk());
-  Chunk& last_chunk = m_chunks.back();
-  for (auto& column_type : m_column_types) {
-    last_chunk.add_column(make_shared_by_column_type<BaseColumn, ValueColumn>(column_type));
+  auto new_chunk = Chunk();
+
+  for (auto& column_type : _column_types) {
+    new_chunk.add_column(make_shared_by_column_type<BaseColumn, ValueColumn>(column_type));
   }
+
+  _chunks.push_back(Chunk());
 }
 
-uint16_t Table::col_count() const { return m_column_names.size(); }
+uint16_t Table::col_count() const { return _column_names.size(); }
 
-uint64_t Table::row_count() const { return (chunk_count() - 1) * chunk_size() + m_chunks.back().size(); }
+uint64_t Table::row_count() const { return (chunk_count() - 1) * chunk_size() + _chunks.back().size(); }
 
-ChunkID Table::chunk_count() const { return ChunkID{static_cast<uint32_t>(m_chunks.size())}; }
+ChunkID Table::chunk_count() const { return ChunkID{static_cast<uint32_t>(_chunks.size())}; }
 
 ColumnID Table::column_id_by_name(const std::string& column_name) const {
   auto count = col_count();
   for (uint16_t id = 0; id < count; id++) {
-    if (m_column_names[id] == column_name) {
+    if (_column_names[id] == column_name) {
       return ColumnID{id};
     }
   }
   throw std::runtime_error("column does not exist");
 }
 
-uint32_t Table::chunk_size() const { return m_chunk_size; }
+uint32_t Table::chunk_size() const { return _chunk_size; }
 
-const std::vector<std::string>& Table::column_names() const { return m_column_names; }
+const std::vector<std::string>& Table::column_names() const { return _column_names; }
 
-const std::string& Table::column_name(ColumnID column_id) const { return m_column_names.at(column_id); }
+const std::string& Table::column_name(ColumnID column_id) const { return _column_names.at(column_id); }
 
-const std::string& Table::column_type(ColumnID column_id) const { return m_column_types.at(column_id); }
+const std::string& Table::column_type(ColumnID column_id) const { return _column_types.at(column_id); }
 
-Chunk& Table::get_chunk(ChunkID chunk_id) { return m_chunks.at(chunk_id); }
+Chunk& Table::get_chunk(ChunkID chunk_id) { return _chunks.at(chunk_id); }
 
-const Chunk& Table::get_chunk(ChunkID chunk_id) const { return m_chunks.at(chunk_id); }
+const Chunk& Table::get_chunk(ChunkID chunk_id) const { return _chunks.at(chunk_id); }
 
-bool Table::is_last_chunk_full() const { return !has_infinite_chunk_size() && m_chunks.back().size() == m_chunk_size; }
+bool Table::is_last_chunk_full() const { return !has_infinite_chunk_size() && _chunks.back().size() == _chunk_size; }
 
-bool Table::has_infinite_chunk_size() const { return m_chunk_size == 0; }
+bool Table::has_infinite_chunk_size() const { return _chunk_size == 0; }
 
 bool Table::has_definition(const std::string& name) const {
-  return std::find(m_column_names.begin(), m_column_names.end(), name) != m_column_names.end();
+  return std::find(_column_names.begin(), _column_names.end(), name) != _column_names.end();
 }
 
 void Table::validate_existing_definition(const std::string& name, const std::string& type) const {
-  auto it = std::find(m_column_names.begin(), m_column_names.end(), name);
-  auto pos = it - m_column_names.begin();
+  auto it = std::find(_column_names.begin(), _column_names.end(), name);
+  auto pos = it - _column_names.begin();
 
-  auto existing_type = m_column_types.at(pos);
+  auto existing_type = _column_types.at(pos);
   if (existing_type != type) {
     throw std::runtime_error("a column definition with the same name but a different type was already added");
   }
 
-  if (m_is_instantiated.at(pos)) {
+  if (_is_instantiated.at(pos)) {
     throw std::runtime_error("a column with the given name was already added");
   }
 }
