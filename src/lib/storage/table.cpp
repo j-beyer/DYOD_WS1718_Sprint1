@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "value_column.hpp"
+#include "dictionary_column.hpp"
 
 #include "resolve_type.hpp"
 #include "types.hpp"
@@ -53,6 +54,22 @@ void Table::create_new_chunk() {
   }
 
   _chunks.push_back(Chunk());
+}
+
+void Table::compress_chunk(ChunkID chunk_id)
+{
+    auto new_chunk = Chunk{};
+
+    auto& old_chunk = get_chunk(chunk_id);
+
+    for(ColumnID id{0}; id < old_chunk.col_count(); ++id){
+        auto cur_column = old_chunk.get_column(id);
+
+        auto new_column = make_shared_by_column_type<BaseColumn, DictionaryColumn>(column_type(id), cur_column);
+        new_chunk.add_column(new_column);
+    }
+
+    std::swap(old_chunk, new_chunk);
 }
 
 uint16_t Table::col_count() const { return _column_names.size(); }
