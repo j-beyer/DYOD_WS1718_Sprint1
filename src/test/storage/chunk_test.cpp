@@ -1,4 +1,5 @@
-﻿#include <memory>
+﻿
+#include <memory>
 
 #include "../base_test.hpp"
 #include "gtest/gtest.h"
@@ -36,7 +37,6 @@ TEST_F(StorageChunkTest, AddColumnToChunk) {
   EXPECT_EQ(c.size(), 3u);
 }
 
-
 TEST_F(StorageChunkTest, AddColumnOfWrongSize) {
   if (IS_DEBUG) {
     c.add_column(vc_int);
@@ -50,7 +50,6 @@ TEST_F(StorageChunkTest, AddColumnOfWrongSize) {
     EXPECT_THROW(c.add_column(vc_too_small), std::exception);
   }
 }
-
 
 TEST_F(StorageChunkTest, AddValuesToChunk) {
   c.add_column(vc_int);

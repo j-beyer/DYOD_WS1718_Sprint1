@@ -90,9 +90,9 @@ class Table : private Noncopyable {
   uint32_t _chunk_size;
 
  private:
-  bool is_last_chunk_full() const;
-  bool has_infinite_chunk_size() const;
-  bool has_definition(const std::string& name) const;
-  void validate_existing_definition(const std::string& name, const std::string& type) const;
+  bool _is_last_chunk_full() const;
+  bool _has_infinite_chunk_size() const;
+  bool _has_definition(const std::string& name) const;
+  void _validate_existing_definition(const std::string& name, const std::string& type) const;
 };
 }  // namespace opossum

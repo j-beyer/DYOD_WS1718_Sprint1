@@ -34,7 +34,7 @@ std::vector<std::string> StorageManager::table_names() const {
 
   // extract name keys from _tables map
   auto get_name = [](const auto& entry) { return entry.first; };
-  std::transform(_tables.begin(), _tables.end(), std::back_inserter(names), get_name);
+  std::transform(_tables.cbegin(), _tables.cend(), std::back_inserter(names), get_name);
 
   // sort the names, because it makes it easier for the user to read
   // assuming that table_names() is only called to display the table names to the user,
