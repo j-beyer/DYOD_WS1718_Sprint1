@@ -5,7 +5,7 @@
 #include <algorithm>
 
 #include "value_column.hpp"
-#include "base_attribute_vector.hpp"
+#include "fitted_attribute_vector.hpp"
 #include "type_cast.hpp"
 
 namespace opossum {
@@ -17,6 +17,7 @@ DictionaryColumn::DictionaryColumn(const std::shared_ptr<BaseColumn> &base_colum
 
     // step 1 create dict vector
     _dictionary = std::make_shared<std::vector<T>>();
+    _attribute_vector = std::make_shared<FittedAttributeVector<uint64_t>>();
 
     std::set<T> distincts;
 
