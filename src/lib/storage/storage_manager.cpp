@@ -1,6 +1,5 @@
 ﻿#include "storage_manager.hpp"
 
-#include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
@@ -23,9 +22,9 @@ void StorageManager::add_table(const std::string& name, std::shared_ptr<Table> t
 }
 
 void StorageManager::drop_table(const std::string& name) {
-    if(!_tables.erase(name)) {
-        throw std::runtime_error("Table does not exist!");
-    }
+  if (!_tables.erase(name)) {
+    throw std::runtime_error("Table does not exist!");
+  }
 }
 
 std::shared_ptr<Table> StorageManager::get_table(const std::string& name) const { return _tables.at(name); }
@@ -35,15 +34,9 @@ bool StorageManager::has_table(const std::string& name) const { return _tables.c
 std::vector<std::string> StorageManager::table_names() const {
   std::vector<std::string> names;
   names.reserve(_tables.size());
-
-  // extract name keys from _tables map
-  auto get_name = [](const auto& entry) { return entry.first; };
-  std::transform(_tables.cbegin(), _tables.cend(), std::back_inserter(names), get_name);
-
-  // sort the names, because it makes it easier for the user to read
-  // assuming that table_names() is only called to display the table names to the user,
-  // and assuming that there is a normal amount of tables, this should not be too expensive
-  std::sort(names.begin(), names.end());
+  for (const auto& entry : _tables) {
+    names.push_back(entry.first);
+  }
   return names;
 }
 

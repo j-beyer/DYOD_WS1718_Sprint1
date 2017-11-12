@@ -7,8 +7,8 @@
 #include <vector>
 
 #include "all_type_variant.hpp"
-#include "types.hpp"
 #include "base_column.hpp"
+#include "types.hpp"
 
 namespace opossum {
 
