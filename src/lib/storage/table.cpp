@@ -21,17 +21,17 @@ namespace opossum {
 Table::Table(const uint32_t chunk_size) : _chunk_size{chunk_size} { create_new_chunk(); }
 
 void Table::add_column_definition(const std::string& name, const std::string& type) {
-  DebugAssert(!_has_definition(name), "column definition already exists");
+  DebugAssert(!has_definition(name), "column definition already exists");
   _column_names.push_back(name);
   _column_types.push_back(type);
   _is_instantiated.push_back(false);
 }
 
 void Table::add_column(const std::string& name, const std::string& type) {
-  if (!_has_definition(name)) {
+  if (!has_definition(name)) {
     add_column_definition(name, type);
   } else {
-    _validate_existing_definition(name, type);
+    validate_existing_definition(name, type);
   }
   for (Chunk& chunk : _chunks) {
     chunk.add_column(make_shared_by_column_type<BaseColumn, ValueColumn>(type));
@@ -40,7 +40,7 @@ void Table::add_column(const std::string& name, const std::string& type) {
 }
 
 void Table::append(std::vector<AllTypeVariant> values) {
-  if (_is_last_chunk_full()) {
+  if (is_last_chunk_full()) {
     create_new_chunk();
   }
   _chunks.back().append(values);
@@ -49,7 +49,7 @@ void Table::append(std::vector<AllTypeVariant> values) {
 void Table::create_new_chunk() {
   auto new_chunk = Chunk();
 
-  for (auto& column_type : _column_types) {
+  for (const auto& column_type : _column_types) {
     new_chunk.add_column(make_shared_by_column_type<BaseColumn, ValueColumn>(column_type));
   }
 
@@ -85,9 +85,9 @@ ChunkID Table::chunk_count() const { return ChunkID{static_cast<uint32_t>(_chunk
 
 ColumnID Table::column_id_by_name(const std::string& column_name) const {
   auto count = col_count();
-  for (uint16_t id = 0; id < count; id++) {
+  for (ColumnID id{0}; id < count; ++id) {
     if (_column_names[id] == column_name) {
-      return ColumnID{id};
+      return id;
     }
   }
   throw std::runtime_error("column does not exist");
@@ -105,15 +105,15 @@ Chunk& Table::get_chunk(ChunkID chunk_id) { return _chunks.at(chunk_id); }
 
 const Chunk& Table::get_chunk(ChunkID chunk_id) const { return _chunks.at(chunk_id); }
 
-bool Table::_is_last_chunk_full() const { return !_has_infinite_chunk_size() && _chunks.back().size() == _chunk_size; }
+bool Table::is_last_chunk_full() const { return !has_infinite_chunk_size() && _chunks.back().size() == _chunk_size; }
 
-bool Table::_has_infinite_chunk_size() const { return _chunk_size == 0; }
+bool Table::has_infinite_chunk_size() const { return _chunk_size == 0; }
 
-bool Table::_has_definition(const std::string& name) const {
+bool Table::has_definition(const std::string& name) const {
   return std::find(_column_names.cbegin(), _column_names.cend(), name) != _column_names.end();
 }
 
-void Table::_validate_existing_definition(const std::string& name, const std::string& type) const {
+void Table::validate_existing_definition(const std::string& name, const std::string& type) const {
   auto it = std::find(_column_names.cbegin(), _column_names.cend(), name);
   auto pos = it - _column_names.cbegin();
 

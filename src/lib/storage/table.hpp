@@ -83,16 +83,21 @@ class Table : private Noncopyable {
   void compress_chunk(ChunkID chunk_id);
 
  protected:
+  // mark if a column was only defined (add_column_definition) or already instantiated (add_column)
   std::vector<bool> _is_instantiated;
   std::vector<std::string> _column_names;
   std::vector<std::string> _column_types;
   std::vector<Chunk> _chunks;
-  uint32_t _chunk_size;
+  const uint32_t _chunk_size;
 
- private:
-  bool _is_last_chunk_full() const;
-  bool _has_infinite_chunk_size() const;
-  bool _has_definition(const std::string& name) const;
-  void _validate_existing_definition(const std::string& name, const std::string& type) const;
+  bool is_last_chunk_full() const;
+  bool has_infinite_chunk_size() const;
+
+  // check whether the name already exists in _column_names
+  bool has_definition(const std::string& name) const;
+
+  // when calling add_column, and a column definition already exists for the given name and type,
+  // validate that given name and type comply with existing definition
+  void validate_existing_definition(const std::string& name, const std::string& type) const;
 };
 }  // namespace opossum
