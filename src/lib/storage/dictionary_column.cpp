@@ -3,6 +3,7 @@
 
 #include <set>
 #include <algorithm>
+#include <cmath>
 
 #include "value_column.hpp"
 #include "fitted_attribute_vector.hpp"
@@ -19,10 +20,6 @@ DictionaryColumn<T>::DictionaryColumn(const std::shared_ptr<BaseColumn> &base_co
         throw std::runtime_error("compression is only supported for value_columns");
     }
 
-    // step 1 create dict vector
-    _dictionary = std::make_shared<std::vector<T>>();
-    _attribute_vector = std::dynamic_pointer_cast<BaseAttributeVector>(std::make_shared<FittedAttributeVector<uint64_t>>());
-
     std::set<T> distincts;
 
     const auto& values = val_column->values();
@@ -30,6 +27,27 @@ DictionaryColumn<T>::DictionaryColumn(const std::shared_ptr<BaseColumn> &base_co
     for(const auto& value : values){
         distincts.insert(value);
     }
+
+    size_t needed_width = std::ceil(std::log(distincts.size())/std::log(256));
+
+    switch(needed_width) {
+    case 1:
+        _attribute_vector = std::dynamic_pointer_cast<BaseAttributeVector>(std::make_shared<FittedAttributeVector<uint8_t>>());
+        break;
+    case 2:
+        _attribute_vector = std::dynamic_pointer_cast<BaseAttributeVector>(std::make_shared<FittedAttributeVector<uint16_t>>());
+        break;
+    case 3:
+    case 4:
+        _attribute_vector = std::dynamic_pointer_cast<BaseAttributeVector>(std::make_shared<FittedAttributeVector<uint32_t>>());
+        break;
+    default:
+        throw std::runtime_error("Unsupported attribute vector width");
+    }
+
+    // step 1 create dict vector
+    _dictionary = std::make_shared<std::vector<T>>();
+
 
     _dictionary->reserve(distincts.size());
 
@@ -45,11 +63,12 @@ DictionaryColumn<T>::DictionaryColumn(const std::shared_ptr<BaseColumn> &base_co
      * If everything goes well then the branch predictor will save us.
      */
 
-    for(ValueID val_id {values.size() - 1}; val_id >= 0; --val_id){
+    //for(size_t val_id = values.size() - 1; val_id - 1 > 0; --val_id) {
+    for (size_t val_id = 0; val_id < values.size(); ++val_id) {
 
-        uint64_t dict_id = std::find(begin, end, values[static_cast<size_t>(val_id)]) - begin;
+        uint64_t dict_id = std::find(begin, end, values[val_id]) - begin;
 
-        _attribute_vector->set(static_cast<uint64_t>(val_id), static_cast<ValueID>(dict_id));
+        _attribute_vector->set(val_id, static_cast<ValueID>(dict_id));
     }
 }
 
