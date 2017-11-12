@@ -53,7 +53,7 @@ void Table::create_new_chunk() {
     new_chunk.add_column(make_shared_by_column_type<BaseColumn, ValueColumn>(column_type));
   }
 
-  _chunks.push_back(Chunk());
+  _chunks.push_back(std::move(new_chunk));
 }
 
 void Table::compress_chunk(ChunkID chunk_id) {
