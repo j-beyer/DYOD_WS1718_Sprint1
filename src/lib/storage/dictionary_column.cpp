@@ -18,7 +18,7 @@ DictionaryColumn<T>::DictionaryColumn(const std::shared_ptr<BaseColumn>& base_co
   auto val_column = std::dynamic_pointer_cast<ValueColumn<T>>(base_column);
 
   if (val_column == nullptr) {
-    throw std::runtime_error("compression is only supported for value_columns");
+    throw std::runtime_error("Compression is only supported for value columns!");
   }
 
   std::set<T> distincts;
@@ -29,21 +29,18 @@ DictionaryColumn<T>::DictionaryColumn(const std::shared_ptr<BaseColumn>& base_co
     distincts.insert(value);
   }
 
-  size_t needed_width = std::ceil(std::log(distincts.size()) / std::log(256));
+  size_t needed_width = std::ceil(std::log(val_column->size()) / std::log(256));
 
   switch (needed_width) {
     case 1:
-      _attribute_vector =
-          std::dynamic_pointer_cast<BaseAttributeVector>(std::make_shared<FittedAttributeVector<uint8_t>>());
+      _attribute_vector = std::make_shared<FittedAttributeVector<uint8_t>>(val_column->size());
       break;
     case 2:
-      _attribute_vector =
-          std::dynamic_pointer_cast<BaseAttributeVector>(std::make_shared<FittedAttributeVector<uint16_t>>());
+      _attribute_vector = std::make_shared<FittedAttributeVector<uint16_t>>(val_column->size());
       break;
     case 3:
     case 4:
-      _attribute_vector =
-          std::dynamic_pointer_cast<BaseAttributeVector>(std::make_shared<FittedAttributeVector<uint32_t>>());
+      _attribute_vector = std::make_shared<FittedAttributeVector<uint32_t>>(val_column->size());
       break;
     default:
       throw std::runtime_error("Unsupported attribute vector width");
@@ -62,7 +59,7 @@ DictionaryColumn<T>::DictionaryColumn(const std::shared_ptr<BaseColumn>& base_co
   auto end = _dictionary->end();
 
   for (size_t val_id = 0; val_id < values.size(); ++val_id) {
-    uint64_t dict_id = std::find(begin, end, values[val_id]) - begin;
+    auto dict_id = std::find(begin, end, values[val_id]) - begin;
 
     _attribute_vector->set(val_id, static_cast<ValueID>(dict_id));
   }

@@ -10,7 +10,6 @@ set(
     storage/dictionary_column.hpp
     storage/dictionary_column.cpp
     storage/fitted_attribute_vector.hpp
-    storage/fitted_attribute_vector.cpp
     storage/storage_manager.cpp
     storage/storage_manager.hpp
     storage/table.cpp
