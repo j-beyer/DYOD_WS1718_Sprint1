@@ -28,7 +28,13 @@ void ValueColumn<T>::append(const AllTypeVariant& val) {
 
 template <typename T>
 size_t ValueColumn<T>::size() const {
-  return _values.size();
+    return _values.size();
+}
+
+template<typename T>
+const std::vector<T> &ValueColumn<T>::values() const
+{
+    return _values;
 }
 
 EXPLICITLY_INSTANTIATE_COLUMN_TYPES(ValueColumn);

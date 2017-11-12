@@ -1,49 +1,38 @@
-#pragma once
 
 #include "types.hpp"
 #include "fitted_attribute_vector.hpp"
 
 namespace opossum {
 
-
 template<typename T>
-FittedAttributeVector::FittedAttributeVector(BaseAttributeVector && other)
-: _data{std::move(other._data)}
+ValueID FittedAttributeVector<T>::get(const size_t i) const
 {
+    return static_cast<ValueID>(_data.at(i));
 }
 
 template<typename T>
-FittedAttributeVector &FittedAttributeVector::operator=(BaseAttributeVector && other)
-: _data{std::move(other._data)}
+void FittedAttributeVector<T>::set(const size_t i, const ValueID value_id)
 {
-}
-
-template<typename T>
-ValueID FittedAttributeVector::get(const size_t i) const
-{
-    return _data.at(i);
-}
-
-template<typename T>
-void FittedAttributeVector::set(const size_t i, const ValueID value_id)
-{
-    if(_data.size() < i){
+    // Be careful with this code this is off by one territory
+    if(_data.size() <= i){
         _data.resize(i+1);
     }
-    data.at(i) = static_cast<T>(value_id);
+    _data[i] = static_cast<T>(value_id);
 }
 
 template<typename T>
-size_t FittedAttributeVector::size() const
+size_t FittedAttributeVector<T>::size() const
 {
     return _data.size();
 }
 
 template<typename T>
-AttributeVectorWidth FittedAttributeVector::width() const
+AttributeVectorWidth FittedAttributeVector<T>::width() const
 {
     return sizeof(T);
 }
+
+template class FittedAttributeVector<uint64_t>;
 
 
 }  // namespace opossum
