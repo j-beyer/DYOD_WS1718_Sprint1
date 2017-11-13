@@ -5,6 +5,7 @@
 #include <cmath>
 #include <memory>
 #include <set>
+#include <unordered_map>
 #include <vector>
 
 #include "fitted_attribute_vector.hpp"
@@ -20,15 +21,17 @@ DictionaryColumn<T>::DictionaryColumn(const std::shared_ptr<BaseColumn>& base_co
 
   Assert(val_column != nullptr, "Compression is only supported for value columns!");
 
-  std::set<T> distincts;
-
   const auto& values = val_column->values();
+  std::set<T> distincts(values.cbegin(), values.cend());
+  std::unordered_map<T, ValueID> m;
 
-  for (const auto& value : values) {
-    distincts.insert(value);
+  _dictionary = std::make_shared<std::vector<T>>(distincts.cbegin(), distincts.cend());
+  size_t index = 0;
+  for (const auto& distinct : distincts) {
+    m[distinct] = index++;
   }
 
-  size_t needed_width = std::ceil(std::log(val_column->size()) / std::log(256));
+  size_t needed_width = std::ceil(std::log(distincts.size()) / std::log(256));
 
   switch (needed_width) {
     case 1:
@@ -45,22 +48,8 @@ DictionaryColumn<T>::DictionaryColumn(const std::shared_ptr<BaseColumn>& base_co
       throw std::runtime_error("Unsupported attribute vector width!");
   }
 
-  // step 1 create dict vector
-  _dictionary = std::make_shared<std::vector<T>>();
-
-  _dictionary->reserve(distincts.size());
-
-  for (const auto& unique : distincts) {
-    _dictionary->push_back(unique);
-  }
-
-  auto begin = _dictionary->begin();
-  auto end = _dictionary->end();
-
   for (size_t val_id = 0; val_id < values.size(); ++val_id) {
-    auto dict_id = std::find(begin, end, values[val_id]) - begin;
-
-    _attribute_vector->set(val_id, static_cast<ValueID>(dict_id));
+    _attribute_vector->set(val_id, m[values[val_id]]);
   }
 }
 
