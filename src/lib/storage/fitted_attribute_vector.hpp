@@ -5,6 +5,7 @@
 
 #include "base_attribute_vector.hpp"
 #include "types.hpp"
+#include "utils/assert.hpp"
 
 namespace opossum {
 
@@ -13,17 +14,21 @@ namespace opossum {
 template <typename T>
 class FittedAttributeVector : public BaseAttributeVector {
  public:
-  explicit FittedAttributeVector(const size_t size) : BaseAttributeVector() { _data.resize(size); }
+  explicit FittedAttributeVector(const size_t size) : BaseAttributeVector() {
+    size_t max = std::numeric_limits<T>::max();
+    Assert(size <= max,
+           "Size " + std::to_string(size) + "too large for vector of width " + std::to_string(width()) + "!");
+
+    _data.resize(size);
+  }
+
   // returns the value at a given position
   ValueID get(const size_t i) const override { return ValueID{_data.at(i)}; }
 
   // inserts the value_id at a given position
   void set(const size_t i, const ValueID value_id) override {
-    size_t max = std::numeric_limits<T>::max();
-    if (i > max) {
-      throw std::runtime_error("Index " + std::to_string(i) + " too large for fitted attribute vector size " +
-                               std::to_string(width()));
-    }
+    Assert(i <= size(), "Index " + std::to_string(i) + " too large for fitted attribute vector of size " +
+                            std::to_string(size()) + "!");
 
     _data[i] = static_cast<T>(value_id);
   }

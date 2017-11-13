@@ -24,6 +24,12 @@ class StorageStorageManagerTest : public BaseTest {
   }
 };
 
+TEST_F(StorageStorageManagerTest, AddExistingTable) {
+  auto& sm = StorageManager::get();
+  auto t3 = std::make_shared<Table>();
+  EXPECT_THROW(sm.add_table("first_table", t3), std::exception);
+}
+
 TEST_F(StorageStorageManagerTest, GetTable) {
   auto& sm = StorageManager::get();
   auto t3 = sm.get_table("first_table");

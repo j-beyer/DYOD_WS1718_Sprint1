@@ -9,6 +9,7 @@
 
 #include "fitted_attribute_vector.hpp"
 #include "type_cast.hpp"
+#include "utils/assert.hpp"
 #include "value_column.hpp"
 
 namespace opossum {
@@ -17,9 +18,7 @@ template <typename T>
 DictionaryColumn<T>::DictionaryColumn(const std::shared_ptr<BaseColumn>& base_column) {
   auto val_column = std::dynamic_pointer_cast<ValueColumn<T>>(base_column);
 
-  if (val_column == nullptr) {
-    throw std::runtime_error("Compression is only supported for value columns!");
-  }
+  Assert(val_column != nullptr, "Compression is only supported for value columns!");
 
   std::set<T> distincts;
 
@@ -43,7 +42,7 @@ DictionaryColumn<T>::DictionaryColumn(const std::shared_ptr<BaseColumn>& base_co
       _attribute_vector = std::make_shared<FittedAttributeVector<uint32_t>>(val_column->size());
       break;
     default:
-      throw std::runtime_error("Unsupported attribute vector width");
+      throw std::runtime_error("Unsupported attribute vector width!");
   }
 
   // step 1 create dict vector
@@ -98,8 +97,8 @@ const T& DictionaryColumn<T>::value_by_value_id(ValueID value_id) const {
 
 template <typename T>
 ValueID DictionaryColumn<T>::lower_bound(T value) const {
-  for (ValueID i{0}; i < _attribute_vector->size(); ++i) {
-    if (value_by_value_id(_attribute_vector->get(i)) >= value) return i;
+  for (ValueID val_id{0}; val_id < _attribute_vector->size(); ++val_id) {
+    if (value_by_value_id(_attribute_vector->get(val_id)) >= value) return val_id;
   }
 
   return INVALID_VALUE_ID;
@@ -113,8 +112,8 @@ ValueID DictionaryColumn<T>::lower_bound(const AllTypeVariant& value) const {
 
 template <typename T>
 ValueID DictionaryColumn<T>::upper_bound(T value) const {
-  for (ValueID i{0}; i < _attribute_vector->size(); ++i) {
-    if (value_by_value_id(_attribute_vector->get(i)) > value) return i;
+  for (ValueID val_id{0}; val_id < _attribute_vector->size(); ++val_id) {
+    if (value_by_value_id(_attribute_vector->get(val_id)) > value) return val_id;
   }
 
   return INVALID_VALUE_ID;
