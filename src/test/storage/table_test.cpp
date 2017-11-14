@@ -62,6 +62,19 @@ TEST_F(StorageTableTest, CompressChunk) {
 
 TEST_F(StorageTableTest, CompressEmptyChunk) { EXPECT_THROW(t.compress_chunk(ChunkID{0}), std::exception); }
 
+TEST_F(StorageTableTest, CompressNonFullChunk) {
+  t.append({4, "Hello"});
+  EXPECT_THROW(t.compress_chunk(ChunkID{0}), std::exception);
+}
+
+TEST_F(StorageTableTest, CompressInfiniteChunk) {
+  Table t_inf{};
+  t_inf.add_column("col_1", "int");
+  t_inf.append({1});
+  t_inf.append({2});
+  EXPECT_THROW(t_inf.compress_chunk(ChunkID{0}), std::exception);
+}
+
 TEST_F(StorageTableTest, GetChunk) {
   t.get_chunk(ChunkID{0});
   // TODO(anyone): Do we want checks here?

@@ -23,13 +23,13 @@ DictionaryColumn<T>::DictionaryColumn(const std::shared_ptr<BaseColumn>& base_co
 
   const auto& values = val_column->values();
   std::set<T> distincts(values.cbegin(), values.cend());
-  std::unordered_map<T, ValueID> valueToDictIndex;
+  std::unordered_map<T, ValueID> value_to_dict_index;
 
   _dictionary = std::make_shared<std::vector<T>>(distincts.cbegin(), distincts.cend());
   // as std::set is already sorting the distinct values for us, we can simply increase the index
   size_t index = 0;
   for (const auto& distinct_value : distincts) {
-    valueToDictIndex[distinct_value] = index++;
+    value_to_dict_index[distinct_value] = index++;
   }
 
   Assert(!distincts.empty(), "Cannot compress empty value column!");
@@ -53,7 +53,7 @@ DictionaryColumn<T>::DictionaryColumn(const std::shared_ptr<BaseColumn>& base_co
   }
 
   for (size_t val_id = 0; val_id < values.size(); ++val_id) {
-    _attribute_vector->set(val_id, valueToDictIndex[values[val_id]]);
+    _attribute_vector->set(val_id, value_to_dict_index[values[val_id]]);
   }
 }
 
