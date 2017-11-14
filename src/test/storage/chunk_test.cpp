@@ -38,17 +38,14 @@ TEST_F(StorageChunkTest, AddColumnToChunk) {
 }
 
 TEST_F(StorageChunkTest, AddColumnOfWrongSize) {
-  if (IS_DEBUG) {
-    c.add_column(vc_int);
-    auto vc_too_large = make_shared_by_column_type<BaseColumn, ValueColumn>("int");
-    auto vc_too_small = make_shared_by_column_type<BaseColumn, ValueColumn>("int");
-    for (auto i = 0; i < 4; ++i) {
-      vc_too_large->append(i);
-    }
-
-    EXPECT_THROW(c.add_column(vc_too_large), std::exception);
-    EXPECT_THROW(c.add_column(vc_too_small), std::exception);
+  c.add_column(vc_int);
+  auto vc_too_large = make_shared_by_column_type<BaseColumn, ValueColumn>("int");
+  auto vc_too_small = make_shared_by_column_type<BaseColumn, ValueColumn>("int");
+  for (auto i = 0; i < 4; ++i) {
+    vc_too_large->append(i);
   }
+  EXPECT_THROW(c.add_column(vc_too_large), std::exception);
+  EXPECT_THROW(c.add_column(vc_too_small), std::exception);
 }
 
 TEST_F(StorageChunkTest, AddValuesToChunk) {
@@ -57,11 +54,9 @@ TEST_F(StorageChunkTest, AddValuesToChunk) {
   c.append({2, "two"});
   EXPECT_EQ(c.size(), 4u);
 
-  if (IS_DEBUG) {
-    EXPECT_THROW(c.append({}), std::exception);
-    EXPECT_THROW(c.append({4, "val", 3}), std::exception);
-    EXPECT_EQ(c.size(), 4u);
-  }
+  EXPECT_THROW(c.append({}), std::exception);
+  EXPECT_THROW(c.append({4, "val", 3}), std::exception);
+  EXPECT_EQ(c.size(), 4u);
 }
 
 TEST_F(StorageChunkTest, RetrieveColumn) {

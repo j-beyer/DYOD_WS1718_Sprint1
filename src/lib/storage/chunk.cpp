@@ -17,12 +17,12 @@ namespace opossum {
 void Chunk::add_column(std::shared_ptr<BaseColumn> column) {
   // if the chunk is empty, always allow adding a new column
   // otherwise, only allow if column size matches
-  DebugAssert(column->size() == this->size() || _columns.size() == 0, "Column size does not match chunk size!");
+  Assert(column->size() == this->size() || _columns.size() == 0, "Column size does not match chunk size!");
   _columns.push_back(column);
 }
 
 void Chunk::append(const std::vector<AllTypeVariant>& values) {
-  DebugAssert(values.size() == _columns.size(), "Number of given values does not match number of columns!");
+  Assert(values.size() == _columns.size(), "Number of given values does not match number of columns!");
   for (size_t i = 0; i < values.size(); i++) {
     _columns[i]->append(values[i]);
   }

@@ -15,9 +15,7 @@ StorageManager& StorageManager::get() {
 }
 
 void StorageManager::add_table(const std::string& name, std::shared_ptr<Table> table) {
-  if (has_table(name)) {
-    throw std::runtime_error("Table '" + name + "' already exists!");
-  }
+  Assert(!has_table(name), "Table '" + name + "' already exists!");
   _tables[name] = table;
 }
 

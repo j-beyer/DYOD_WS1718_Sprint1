@@ -66,7 +66,7 @@ const T DictionaryColumn<T>::get(const size_t i) const {
 
 template <typename T>
 void DictionaryColumn<T>::append(const AllTypeVariant&) {
-  throw std::runtime_error("Appending to a compressed column is not supported");
+  throw std::runtime_error("Appending to a compressed column is not supported!");
 }
 
 template <typename T>

@@ -21,7 +21,7 @@ namespace opossum {
 Table::Table(const uint32_t chunk_size) : _chunk_size{chunk_size} { create_new_chunk(); }
 
 void Table::add_column_definition(const std::string& name, const std::string& type) {
-  DebugAssert(!has_definition(name), "column definition already exists");
+  Assert(!has_definition(name), "Column definition already exists!");
   _column_names.push_back(name);
   _column_types.push_back(type);
   _is_instantiated.push_back(false);
@@ -92,7 +92,7 @@ ColumnID Table::column_id_by_name(const std::string& column_name) const {
       return id;
     }
   }
-  throw std::runtime_error("column does not exist");
+  throw std::runtime_error("Column does not exist!");
 }
 
 uint32_t Table::chunk_size() const { return _chunk_size; }
@@ -120,13 +120,8 @@ void Table::validate_existing_definition(const std::string& name, const std::str
   auto pos = it - _column_names.cbegin();
 
   auto existing_type = _column_types.at(pos);
-  if (existing_type != type) {
-    throw std::runtime_error("a column definition with the same name but a different type was already added");
-  }
-
-  if (_is_instantiated.at(pos)) {
-    throw std::runtime_error("a column with the given name was already added");
-  }
+  Assert(existing_type == type, "A column definition with the same name but a different type was already added!");
+  Assert(!_is_instantiated.at(pos), "A column with the given name was already added!");
 }
 
 }  // namespace opossum
