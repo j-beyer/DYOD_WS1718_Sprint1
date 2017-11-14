@@ -23,14 +23,18 @@ DictionaryColumn<T>::DictionaryColumn(const std::shared_ptr<BaseColumn>& base_co
 
   const auto& values = val_column->values();
   std::set<T> distincts(values.cbegin(), values.cend());
-  std::unordered_map<T, ValueID> m;
+  std::unordered_map<T, ValueID> valueToDictIndex;
 
   _dictionary = std::make_shared<std::vector<T>>(distincts.cbegin(), distincts.cend());
+  // as std::set is already sorting the distinct values for us, we can simply increase the index
   size_t index = 0;
-  for (const auto& distinct : distincts) {
-    m[distinct] = index++;
+  for (const auto& distinct_value : distincts) {
+    valueToDictIndex[distinct_value] = index++;
   }
 
+  Assert(!distincts.empty(), "Cannot compress empty value column!");
+
+  // we can encode 2^8 = 256 distinct values in one byte
   size_t needed_width = std::ceil(std::log(distincts.size()) / std::log(256));
 
   switch (needed_width) {
@@ -49,7 +53,7 @@ DictionaryColumn<T>::DictionaryColumn(const std::shared_ptr<BaseColumn>& base_co
   }
 
   for (size_t val_id = 0; val_id < values.size(); ++val_id) {
-    _attribute_vector->set(val_id, m[values[val_id]]);
+    _attribute_vector->set(val_id, valueToDictIndex[values[val_id]]);
   }
 }
 

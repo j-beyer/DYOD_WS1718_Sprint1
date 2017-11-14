@@ -61,7 +61,9 @@ void Table::compress_chunk(ChunkID chunk_id) {
 
   auto& old_chunk = get_chunk(chunk_id);
 
-  Assert(old_chunk.size() != 0, "Empty chunk cannot be compressed!");  // TODO(team) does this make sense?
+  // These assertions are based on Slide 11 of Week 3: "Dictionary encoding is applied to full chunk"
+  Assert(!has_infinite_chunk_size(), "Cannot compress chunk of unlimited size!");
+  Assert(old_chunk.size() == chunk_size(), "Non-full chunk cannot be compressed!");
 
   for (ColumnID id{0}; id < old_chunk.col_count(); ++id) {
     auto cur_column = old_chunk.get_column(id);
