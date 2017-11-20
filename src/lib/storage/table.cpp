@@ -21,17 +21,17 @@ namespace opossum {
 Table::Table(const uint32_t chunk_size) : _chunk_size{chunk_size} { create_new_chunk(); }
 
 void Table::add_column_definition(const std::string& name, const std::string& type) {
-  Assert(!has_definition(name), "Column definition already exists!");
+  Assert(!_has_definition(name), "Column definition already exists!");
   _column_names.push_back(name);
   _column_types.push_back(type);
   _is_instantiated.push_back(false);
 }
 
 void Table::add_column(const std::string& name, const std::string& type) {
-  if (!has_definition(name)) {
+  if (!_has_definition(name)) {
     add_column_definition(name, type);
   } else {
-    validate_existing_definition(name, type);
+    _validate_existing_definition(name, type);
   }
   for (Chunk& chunk : _chunks) {
     chunk.add_column(make_shared_by_column_type<BaseColumn, ValueColumn>(type));
@@ -40,7 +40,7 @@ void Table::add_column(const std::string& name, const std::string& type) {
 }
 
 void Table::append(std::vector<AllTypeVariant> values) {
-  if (is_last_chunk_full()) {
+  if (_is_last_chunk_full()) {
     create_new_chunk();
   }
   _chunks.back().append(values);
@@ -62,7 +62,7 @@ void Table::compress_chunk(ChunkID chunk_id) {
   auto& old_chunk = get_chunk(chunk_id);
 
   // These assertions are based on Slide 11 of Week 3: "Dictionary encoding is applied to full chunk"
-  Assert(!has_infinite_chunk_size(), "Cannot compress chunk of unlimited size!");
+  Assert(!_has_infinite_chunk_size(), "Cannot compress chunk of unlimited size!");
   Assert(old_chunk.size() == chunk_size(), "Non-full chunk cannot be compressed!");
 
   for (ColumnID id{0}; id < old_chunk.col_count(); ++id) {
@@ -109,15 +109,15 @@ Chunk& Table::get_chunk(ChunkID chunk_id) { return _chunks.at(chunk_id); }
 
 const Chunk& Table::get_chunk(ChunkID chunk_id) const { return _chunks.at(chunk_id); }
 
-bool Table::is_last_chunk_full() const { return !has_infinite_chunk_size() && _chunks.back().size() == _chunk_size; }
+bool Table::_is_last_chunk_full() const { return !_has_infinite_chunk_size() && _chunks.back().size() == _chunk_size; }
 
-bool Table::has_infinite_chunk_size() const { return _chunk_size == 0; }
+bool Table::_has_infinite_chunk_size() const { return _chunk_size == 0; }
 
-bool Table::has_definition(const std::string& name) const {
+bool Table::_has_definition(const std::string& name) const {
   return std::find(_column_names.cbegin(), _column_names.cend(), name) != _column_names.end();
 }
 
-void Table::validate_existing_definition(const std::string& name, const std::string& type) const {
+void Table::_validate_existing_definition(const std::string& name, const std::string& type) const {
   auto it = std::find(_column_names.cbegin(), _column_names.cend(), name);
   auto pos = it - _column_names.cbegin();
 

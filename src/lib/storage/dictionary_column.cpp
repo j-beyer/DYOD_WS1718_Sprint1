@@ -90,11 +90,12 @@ const T& DictionaryColumn<T>::value_by_value_id(ValueID value_id) const {
 
 template <typename T>
 ValueID DictionaryColumn<T>::lower_bound(T value) const {
-  for (ValueID val_id{0}; val_id < _attribute_vector->size(); ++val_id) {
-    if (value_by_value_id(_attribute_vector->get(val_id)) >= value) return val_id;
+  const auto lower_bound_it = std::lower_bound(_dictionary->cbegin(), _dictionary->cend(), value);
+  if (lower_bound_it == _dictionary->cend()) {
+    return INVALID_VALUE_ID;
   }
-
-  return INVALID_VALUE_ID;
+  const auto lower_bound_pos = lower_bound_it - _dictionary->cbegin();
+  return static_cast<ValueID>(lower_bound_pos);
 }
 
 template <typename T>
@@ -105,11 +106,12 @@ ValueID DictionaryColumn<T>::lower_bound(const AllTypeVariant& value) const {
 
 template <typename T>
 ValueID DictionaryColumn<T>::upper_bound(T value) const {
-  for (ValueID val_id{0}; val_id < _attribute_vector->size(); ++val_id) {
-    if (value_by_value_id(_attribute_vector->get(val_id)) > value) return val_id;
+  const auto upper_bound_id = std::upper_bound(_dictionary->cbegin(), _dictionary->cend(), value);
+  if (upper_bound_id == _dictionary->cend()) {
+    return INVALID_VALUE_ID;
   }
-
-  return INVALID_VALUE_ID;
+  const auto upper_bound_pos = upper_bound_id - _dictionary->cbegin();
+  return static_cast<ValueID>(upper_bound_pos);
 }
 
 template <typename T>

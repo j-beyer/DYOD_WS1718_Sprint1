@@ -128,4 +128,11 @@ TEST_F(StorageDictionaryColumnTest, LowerUpperBoundVariants) {
   EXPECT_EQ(dict_col->upper_bound(AllTypeVariant{15}), INVALID_VALUE_ID);
 }
 
+TEST_F(StorageDictionaryColumnTest, ValueByValueId) {
+  EXPECT_EQ(dc_str->value_by_value_id(ValueID{0}), "Alexander");
+  EXPECT_EQ(dc_str->value_by_value_id(ValueID{1}), "Bill");
+  EXPECT_EQ(dc_str->value_by_value_id(ValueID{2}), "Hasso");
+  EXPECT_EQ(dc_str->value_by_value_id(ValueID{3}), "Steve");
+}
+
 }  // namespace opossum
