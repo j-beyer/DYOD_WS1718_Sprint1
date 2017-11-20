@@ -129,7 +129,4 @@ void Table::_validate_existing_definition(const std::string& name, const std::st
 void emplace_chunk(Chunk chunk) {
   // Implementation goes here
 }
-
-void Table::compress_chunk(ChunkID chunk_id) { throw std::runtime_error("TODO"); }
-
 }  // namespace opossum
