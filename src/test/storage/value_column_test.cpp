@@ -16,6 +16,15 @@ class StorageValueColumnTest : public BaseTest {
   ValueColumn<double> vc_double;
 };
 
+TEST_F(StorageValueColumnTest, ArraySubscript) {
+  vc_int.append(3);
+  vc_int.append(4);
+  EXPECT_EQ(type_cast<int>(vc_int[0]), 3);
+  EXPECT_EQ(type_cast<int>(vc_int[1]), 4);
+}
+
+TEST_F(StorageValueColumnTest, ArraySubscriptOutOfBounds) { EXPECT_THROW((vc_int[0]), std::exception); }
+
 TEST_F(StorageValueColumnTest, GetSize) {
   EXPECT_EQ(vc_int.size(), 0u);
   EXPECT_EQ(vc_str.size(), 0u);

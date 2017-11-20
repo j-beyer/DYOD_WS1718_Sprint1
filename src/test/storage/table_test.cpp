@@ -8,6 +8,7 @@
 #include "gtest/gtest.h"
 
 #include "../lib/resolve_type.hpp"
+#include "../lib/storage/dictionary_column.hpp"
 #include "../lib/storage/table.hpp"
 
 namespace opossum {
@@ -45,6 +46,35 @@ TEST_F(StorageTableTest, ChunkCountInfiniteSize) {
   EXPECT_EQ(t_inf.row_count(), 3u);
 }
 
+TEST_F(StorageTableTest, CompressChunk) {
+  t.append({4, "Hello,"});
+  t.append({6, "world"});
+  t.compress_chunk(ChunkID{0});
+  const auto& chunk_after = t.get_chunk(ChunkID{0});
+
+  const auto column1 = chunk_after.get_column(ColumnID{0});
+  const auto column2 = chunk_after.get_column(ColumnID{1});
+  const auto base_column1 = std::dynamic_pointer_cast<DictionaryColumn<int>>(column1);
+  const auto base_column2 = std::dynamic_pointer_cast<DictionaryColumn<std::string>>(column2);
+  EXPECT_NE(base_column1, nullptr);
+  EXPECT_NE(base_column2, nullptr);
+}
+
+TEST_F(StorageTableTest, CompressEmptyChunk) { EXPECT_THROW(t.compress_chunk(ChunkID{0}), std::exception); }
+
+TEST_F(StorageTableTest, CompressNonFullChunk) {
+  t.append({4, "Hello"});
+  EXPECT_THROW(t.compress_chunk(ChunkID{0}), std::exception);
+}
+
+TEST_F(StorageTableTest, CompressInfiniteChunk) {
+  Table t_inf{};
+  t_inf.add_column("col_1", "int");
+  t_inf.append({1});
+  t_inf.append({2});
+  EXPECT_THROW(t_inf.compress_chunk(ChunkID{0}), std::exception);
+}
+
 TEST_F(StorageTableTest, GetChunk) {
   t.get_chunk(ChunkID{0});
   // TODO(anyone): Do we want checks here?
@@ -53,6 +83,11 @@ TEST_F(StorageTableTest, GetChunk) {
   t.append({6, "world"});
   t.append({3, "!"});
   t.get_chunk(ChunkID{1});
+}
+
+TEST_F(StorageTableTest, GetChunkConst) {
+  const Table ct{2};
+  ct.get_chunk(ChunkID{0});
 }
 
 TEST_F(StorageTableTest, ColCount) { EXPECT_EQ(t.col_count(), 2u); }
@@ -85,6 +120,15 @@ TEST_F(StorageTableTest, GetColumnIdByName) {
 }
 
 TEST_F(StorageTableTest, GetChunkSize) { EXPECT_EQ(t.chunk_size(), 2u); }
+
+TEST_F(StorageTableTest, ColumnNames) {
+  auto col_names = t.column_names();
+  auto find_col_1 = std::find(col_names.cbegin(), col_names.cend(), "col_1");
+  auto find_col_2 = std::find(col_names.cbegin(), col_names.cend(), "col_2");
+  EXPECT_NE(find_col_1, col_names.end());
+  EXPECT_NE(find_col_2, col_names.end());
+  EXPECT_EQ(col_names.size(), 2u);
+}
 
 TEST_F(StorageTableTest, AddExistingColumnDefinition) {
   EXPECT_THROW(t.add_column_definition("col_1", "int"), std::exception);

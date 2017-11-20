@@ -1,4 +1,5 @@
-﻿#include <memory>
+﻿
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -22,6 +23,12 @@ class StorageStorageManagerTest : public BaseTest {
     sm.add_table("second_table", t2);
   }
 };
+
+TEST_F(StorageStorageManagerTest, AddExistingTable) {
+  auto& sm = StorageManager::get();
+  auto t3 = std::make_shared<Table>();
+  EXPECT_THROW(sm.add_table("first_table", t3), std::exception);
+}
 
 TEST_F(StorageStorageManagerTest, GetTable) {
   auto& sm = StorageManager::get();

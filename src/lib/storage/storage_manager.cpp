@@ -1,6 +1,5 @@
 ﻿#include "storage_manager.hpp"
 
-#include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
@@ -16,43 +15,26 @@ StorageManager& StorageManager::get() {
 }
 
 void StorageManager::add_table(const std::string& name, std::shared_ptr<Table> table) {
-  if (has_table(name)) {
-    throw std::runtime_error("the table '" + name + "' already exists");
-  }
-  m_tables[name] = table;
+  Assert(!has_table(name), "Table '" + name + "' already exists!");
+  _tables[name] = table;
 }
 
 void StorageManager::drop_table(const std::string& name) {
-  if (!has_table(name)) {
-    throw std::runtime_error("the table '" + name + "' does not exist");
+  if (!_tables.erase(name)) {
+    throw std::runtime_error("Table does not exist!");
   }
-  m_tables.erase(name);
 }
 
-std::shared_ptr<Table> StorageManager::get_table(const std::string& name) const {
-  if (!has_table(name)) {
-    throw std::runtime_error("the table '" + name + "' does not exist");
-  }
-  return m_tables.at(name);
-}
+std::shared_ptr<Table> StorageManager::get_table(const std::string& name) const { return _tables.at(name); }
 
-bool StorageManager::has_table(const std::string& name) const {
-  auto it = m_tables.find(name);
-  return (it != m_tables.end());
-}
+bool StorageManager::has_table(const std::string& name) const { return _tables.count(name); }
 
 std::vector<std::string> StorageManager::table_names() const {
   std::vector<std::string> names;
-  names.reserve(m_tables.size());
-
-  // extract name keys from m_tables map
-  auto get_name = [](const auto& entry) { return entry.first; };
-  std::transform(m_tables.begin(), m_tables.end(), std::back_inserter(names), get_name);
-
-  // sort the names, because it makes it easier for the user to read
-  // assuming that table_names() is only called to display the table names to the user,
-  // and assuming that there is a normal amount of tables, this should not be too expensive
-  std::sort(names.begin(), names.end());
+  names.reserve(_tables.size());
+  for (const auto& entry : _tables) {
+    names.push_back(entry.first);
+  }
   return names;
 }
 
@@ -68,9 +50,6 @@ void StorageManager::print(std::ostream& out) const {
   out << std::endl;
 }
 
-void StorageManager::reset() {
-  auto& instance = get();
-  instance = StorageManager{};
-}
+void StorageManager::reset() { get() = StorageManager{}; }
 
 }  // namespace opossum

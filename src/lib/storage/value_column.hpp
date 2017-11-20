@@ -30,7 +30,7 @@ class ValueColumn : public BaseColumn {
   const std::vector<T>& values() const;
 
  protected:
-  std::vector<T> m_values;
+  std::vector<T> _values;
 };
 
 }  // namespace opossum
