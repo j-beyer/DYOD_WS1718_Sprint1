@@ -4,25 +4,16 @@
 
 namespace opossum {
 
-GetTable::GetTable(const std::string &name)
-: _table_name{name}
-{
+GetTable::GetTable(const std::string& name) : _table_name{name} {}
 
+const std::string& GetTable::table_name() const { return _table_name; }
+
+std::shared_ptr<const Table> GetTable::_on_execute() {
+  const auto& manager = StorageManager::get();
+  Assert(manager.has_table(_table_name), "Invalid table name used in GetTable operator!");
+
+  _output = manager.get_table(_table_name);
+  return _output;
 }
 
-const std::string &GetTable::table_name() const
-{
-    return _table_name;
-
-}
-
-std::shared_ptr<const Table> GetTable::_on_execute()
-{
-    const auto& manager = StorageManager::get();
-
-    _output = manager.get_table(_table_name);
-
-    return _output;
-}
-
-} // namespace opossum
+}  // namespace opossum
