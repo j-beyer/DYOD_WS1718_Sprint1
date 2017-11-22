@@ -3,9 +3,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <memory>
-#include <set>
-#include <unordered_map>
 #include <vector>
 
 #include "fitted_attribute_vector.hpp"
@@ -28,33 +27,25 @@ DictionaryColumn<T>::DictionaryColumn(const std::shared_ptr<BaseColumn>& base_co
   auto last = std::unique(_dictionary->begin(), _dictionary->end());
   _dictionary->erase(last, _dictionary->end());
 
-  std::unordered_map<T, ValueID> value_to_dict_index;
-  size_t index = 0;
-  for (const auto& distinct_value : (*_dictionary)) {
-    value_to_dict_index[distinct_value] = index++;
+  const size_t attr_size = values.size();
+  Assert(attr_size < std::numeric_limits<uint32_t>::max(), "Unsupported attribute vector width!");
+
+  if (attr_size < std::numeric_limits<uint8_t>::max()) {
+    _attribute_vector = std::make_shared<FittedAttributeVector<uint8_t>>(attr_size);
+  } else if (attr_size < std::numeric_limits<uint16_t>::max()) {
+    _attribute_vector = std::make_shared<FittedAttributeVector<uint16_t>>(attr_size);
+  } else {
+    _attribute_vector = std::make_shared<FittedAttributeVector<uint32_t>>(attr_size);
   }
 
-  // we can encode 2^8 = 256 distinct values in one byte
-  // however, we need to reserve 1 element for the NULL value
-  size_t needed_width = std::ceil(std::log(_dictionary->size() + 1) / std::log(256));
+  for (size_t attr_value_id = 0; attr_value_id < values.size(); ++attr_value_id) {
+    const auto value = values[attr_value_id];
+    const auto value_it = std::lower_bound(_dictionary->cbegin(), _dictionary->cend(), value);
+    // we can assume that lower_bound will find a match,
+    // as we inserted the values into the dictionary before
+    const auto dict_value_id = value_it - _dictionary->cbegin();
 
-  switch (needed_width) {
-    case 1:
-      _attribute_vector = std::make_shared<FittedAttributeVector<uint8_t>>(val_column->size());
-      break;
-    case 2:
-      _attribute_vector = std::make_shared<FittedAttributeVector<uint16_t>>(val_column->size());
-      break;
-    case 3:
-    case 4:
-      _attribute_vector = std::make_shared<FittedAttributeVector<uint32_t>>(val_column->size());
-      break;
-    default:
-      throw std::runtime_error("Unsupported attribute vector width!");
-  }
-
-  for (size_t val_id = 0; val_id < values.size(); ++val_id) {
-    _attribute_vector->set(val_id, value_to_dict_index[values[val_id]]);
+    _attribute_vector->set(attr_value_id, ValueID(dict_value_id));
   }
 }
 
