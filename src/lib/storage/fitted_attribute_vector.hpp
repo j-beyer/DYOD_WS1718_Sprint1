@@ -24,7 +24,10 @@ class FittedAttributeVector : public BaseAttributeVector {
     _data.resize(size);
   }
 
-  ValueID get(const size_t i) const override { return ValueID{_data.at(i)}; }
+  ValueID get(const size_t i) const override {
+    DebugAssert(i < _data.size(), "Index out of bounds!");
+    return ValueID{_data[i]};
+  }
 
   void set(const size_t i, const ValueID value_id) override {
     Assert(i <= size(), "Index " + std::to_string(i) + " too large for fitted attribute vector of size " +
