@@ -14,9 +14,7 @@ namespace opossum {
 
 class BaseTableScanImpl {
  public:
-  virtual std::shared_ptr<const Table> on_execute(const AllTypeVariant& search_value,
-                                                  const std::shared_ptr<const Table> table,
-                                                  const ColumnID column_id) = 0;
+  virtual std::shared_ptr<const Table> on_execute() = 0;
 };
 class Table;
 
@@ -37,14 +35,25 @@ class TableScan : public AbstractOperator {
   template <typename T>
   class TableScanImpl : public BaseTableScanImpl {
    public:
-    std::shared_ptr<const Table> on_execute(const AllTypeVariant& search_value_variant,
-                                            const std::shared_ptr<const Table> table,
-                                            const ColumnID column_id) override;
+    TableScanImpl<T>(const std::shared_ptr<const Table> in_table, ColumnID column_id, const ScanType scan_type,
+                     const AllTypeVariant& search_value)
+        : _in_table{in_table}, _column_id{column_id}, _scan_type{scan_type}, _search_value{search_value} {}
+
+    std::shared_ptr<const Table> on_execute() override;
+
+   protected:
+    std::shared_ptr<PosList> create_pos_list() const;
+
+    const std::shared_ptr<const Table> _in_table;
+    ColumnID _column_id;
+    const ScanType _scan_type;
+    const AllTypeVariant& _search_value;
   };
 
+  const std::shared_ptr<const AbstractOperator> _in;
   ColumnID _column_id;
-  ScanType _scan_type;
-  AllTypeVariant _search_value;
+  const ScanType _scan_type;
+  const AllTypeVariant& _search_value;
 };
 
 }  // namespace opossum
