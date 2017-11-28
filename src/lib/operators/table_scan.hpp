@@ -16,7 +16,7 @@ namespace opossum {
 
 class BaseTableScanImpl {
 public:
-    virtual std::shared_ptr<const Table> on_execute(const AllTypeVariant & search_value, const std::shared_ptr<const Table> table) = 0;
+    virtual std::shared_ptr<const Table> on_execute(const AllTypeVariant & search_value, const std::shared_ptr<const Table> table, const ColumnID column_id) = 0;
 };
 class Table;
 
@@ -38,7 +38,7 @@ class TableScan : public AbstractOperator {
     template <typename T>
   class TableScanImpl : public BaseTableScanImpl {
   public:
-      std::shared_ptr<const Table> on_execute(const AllTypeVariant & search_value, const std::shared_ptr<const Table> table) override;
+      std::shared_ptr<const Table> on_execute(const AllTypeVariant & search_value_variant, const std::shared_ptr<const Table> table, const ColumnID column_id) override;
   };
 
     ColumnID _column_id;
