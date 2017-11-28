@@ -77,6 +77,7 @@ std::shared_ptr<PosList> TableScan::TableScanImpl<T>::create_pos_list() const {
 
     auto reference_column = std::dynamic_pointer_cast<ReferenceColumn>(base_column);
     if (reference_column != nullptr) {
+      // TODO reuse pos_list?
     }
 
     // either the search value type does not match the column type,
