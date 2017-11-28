@@ -10,13 +10,13 @@
 #include "types.hpp"
 #include "utils/assert.hpp"
 
-
-
 namespace opossum {
 
 class BaseTableScanImpl {
-public:
-    virtual std::shared_ptr<const Table> on_execute(const AllTypeVariant & search_value, const std::shared_ptr<const Table> table, const ColumnID column_id) = 0;
+ public:
+  virtual std::shared_ptr<const Table> on_execute(const AllTypeVariant& search_value,
+                                                  const std::shared_ptr<const Table> table,
+                                                  const ColumnID column_id) = 0;
 };
 class Table;
 
@@ -34,16 +34,17 @@ class TableScan : public AbstractOperator {
  protected:
   std::shared_ptr<const Table> _on_execute() override;
 
-
-    template <typename T>
+  template <typename T>
   class TableScanImpl : public BaseTableScanImpl {
-  public:
-      std::shared_ptr<const Table> on_execute(const AllTypeVariant & search_value_variant, const std::shared_ptr<const Table> table, const ColumnID column_id) override;
+   public:
+    std::shared_ptr<const Table> on_execute(const AllTypeVariant& search_value_variant,
+                                            const std::shared_ptr<const Table> table,
+                                            const ColumnID column_id) override;
   };
 
-    ColumnID _column_id;
-    ScanType _scan_type;
-    AllTypeVariant _search_value;
+  ColumnID _column_id;
+  ScanType _scan_type;
+  AllTypeVariant _search_value;
 };
 
 }  // namespace opossum
