@@ -126,7 +126,5 @@ void Table::_validate_existing_definition(const std::string& name, const std::st
   Assert(!_is_instantiated.at(pos), "A column with the given name was already added!");
 }
 
-void emplace_chunk(Chunk chunk) {
-  // Implementation goes here
-}
+void Table::emplace_chunk(Chunk chunk) { _chunks.emplace_back(std::move(chunk)); }
 }  // namespace opossum
