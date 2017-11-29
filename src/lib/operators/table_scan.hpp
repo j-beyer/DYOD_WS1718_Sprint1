@@ -37,17 +37,24 @@ class TableScan : public AbstractOperator {
    public:
     TableScanImpl<T>(const std::shared_ptr<const Table> in_table, ColumnID column_id, const ScanType scan_type,
                      const AllTypeVariant& search_value)
-        : _in_table{in_table}, _column_id{column_id}, _scan_type{scan_type}, _search_value{search_value} {}
+        : _in_table{in_table}, _column_id{column_id}, _scan_type{scan_type}, _search_value{search_value} {
+      _pos_list = std::make_shared<PosList>();
+    }
 
     std::shared_ptr<const Table> on_execute() override;
 
    protected:
-    std::shared_ptr<PosList> create_pos_list() const;
+    void _create_pos_list();
+    std::function<bool(const T&, const T&)> _get_comparator() const;
+    std::vector<ChunkOffset> _eval_operator(const T& search_value, const std::vector<T>& values,
+                                            std::function<bool(const T&, const T&)> compare_function) const;
 
     const std::shared_ptr<const Table> _in_table;
     ColumnID _column_id;
     const ScanType _scan_type;
     const AllTypeVariant& _search_value;
+
+    std::shared_ptr<PosList> _pos_list;
   };
 
   const std::shared_ptr<const AbstractOperator> _in;

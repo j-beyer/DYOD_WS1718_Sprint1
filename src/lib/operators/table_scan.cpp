@@ -38,10 +38,10 @@ std::shared_ptr<const Table> TableScan::TableScanImpl<T>::on_execute() {
   result_table->add_column_definition(_in_table->column_name(_column_id), _in_table->column_type(_column_id));
 
   // create PosList and fill with values from scan
-  auto pos_list = create_pos_list();
+  _create_pos_list();
 
   // create reference column
-  auto reference_column = std::make_shared<ReferenceColumn>(_in_table, _column_id, pos_list);
+  auto reference_column = std::make_shared<ReferenceColumn>(_in_table, _column_id, _pos_list);
 
   // create chunk
   auto chunk = Chunk{};
@@ -56,10 +56,7 @@ std::shared_ptr<const Table> TableScan::TableScanImpl<T>::on_execute() {
 }
 
 template <typename T>
-std::shared_ptr<PosList> TableScan::TableScanImpl<T>::create_pos_list() const {
-  // create PosList
-  auto pos_list = std::make_shared<PosList>();
-
+void TableScan::TableScanImpl<T>::_create_pos_list() {
   const T search_value = type_cast<T>(_search_value);
 
   for (auto chunk_id = ChunkID{0}; chunk_id < _in_table->chunk_count(); ++chunk_id) {
@@ -69,10 +66,17 @@ std::shared_ptr<PosList> TableScan::TableScanImpl<T>::create_pos_list() const {
     auto value_column = std::dynamic_pointer_cast<ValueColumn<T>>(base_column);
     if (value_column != nullptr) {
       const auto& values = value_column->values();
+      const auto chunk_offsets = _eval_operator(search_value, values, _get_comparator());
+      for (const auto chunk_offset : chunk_offsets) {
+        _pos_list->emplace_back(RowID{chunk_id, chunk_offset});
+      }
     }
 
     auto dictionary_column = std::dynamic_pointer_cast<DictionaryColumn<T>>(base_column);
     if (dictionary_column != nullptr) {
+      //      if (!_should_prune(search_value, dictionary_column)) {
+
+      //      }
     }
 
     auto reference_column = std::dynamic_pointer_cast<ReferenceColumn>(base_column);
@@ -84,8 +88,40 @@ std::shared_ptr<PosList> TableScan::TableScanImpl<T>::create_pos_list() const {
     // or we are dealing with another column subclass that we do not know of yet
     throw std::runtime_error("Invalid column type or subclass!");
   }
+}
+// TODO define alias for std::function<bool(const T&, const T&)> with using
+template <typename T>
+std::function<bool(const T&, const T&)> TableScan::TableScanImpl<T>::_get_comparator() const {
+  switch (_scan_type) {
+    case ScanType::OpEquals:
+      return [](T t1, T t2) { return t1 == t2; };
+    case ScanType::OpNotEquals:
+      return [](T t1, T t2) { return t1 != t2; };
+    case ScanType::OpLessThan:
+      return [](T t1, T t2) { return t1 < t2; };
+    case ScanType::OpLessThanEquals:
+      return [](T t1, T t2) { return t1 <= t2; };
+    case ScanType::OpGreaterThan:
+      return [](T t1, T t2) { return t1 > t2; };
+    case ScanType::OpGreaterThanEquals:
+      return [](T t1, T t2) { return t1 >= t2; };
+    default:
+      throw std::runtime_error("Invalid scan type!");
+  }
+}
 
-  return pos_list;
+template <typename T>
+std::vector<ChunkOffset> TableScan::TableScanImpl<T>::_eval_operator(
+    const T& search_value, const std::vector<T>& values,
+    const std::function<bool(const T&, const T&)> compare_function) const {
+  auto chunk_offsets = std::vector<ChunkOffset>{};
+  // TODO can this be done as lambda?
+  for (auto chunk_offset = ChunkOffset{0}; chunk_offset < values.size(); ++chunk_offset) {
+    if (compare_function(search_value, values[chunk_offset])) {
+      chunk_offsets.push_back(chunk_offset);
+    }
+  }
+  return chunk_offsets;
 }
 
 }  // namespace opossum
