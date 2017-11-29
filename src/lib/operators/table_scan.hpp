@@ -7,6 +7,7 @@
 
 #include "abstract_operator.hpp"
 #include "all_type_variant.hpp"
+#include "storage/dictionary_column.hpp"
 #include "types.hpp"
 #include "utils/assert.hpp"
 
@@ -46,7 +47,10 @@ class TableScan : public AbstractOperator {
    protected:
     void _create_pos_list();
     std::function<bool(const T&, const T&)> _get_comparator() const;
+    bool _should_prune(const T& search_value, const std::shared_ptr<DictionaryColumn<T>> dictionary_column);
     std::vector<ChunkOffset> _eval_operator(const T& search_value, const std::vector<T>& values,
+                                            std::function<bool(const T&, const T&)> compare_function) const;
+    std::vector<ChunkOffset> _eval_operator(const T& search_value, const std::shared_ptr<DictionaryColumn<T>> dictionary_column,
                                             std::function<bool(const T&, const T&)> compare_function) const;
 
     const std::shared_ptr<const Table> _in_table;

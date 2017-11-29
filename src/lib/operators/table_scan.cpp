@@ -72,9 +72,12 @@ void TableScan::TableScanImpl<T>::_create_pos_list() {
 
     auto dictionary_column = std::dynamic_pointer_cast<DictionaryColumn<T>>(base_column);
     if (dictionary_column != nullptr) {
-      //      if (!_should_prune(search_value, dictionary_column)) {
-
-      //      }
+        if (!_should_prune(search_value, dictionary_column)) {
+            const auto chunk_offsets = _eval_operator(search_value, dictionary_column, _get_comparator());
+            for (const auto chunk_offset : chunk_offsets) {
+                _pos_list->emplace_back(RowID{chunk_id, chunk_offset});
+            }
+        }
     }
 
     auto reference_column = std::dynamic_pointer_cast<ReferenceColumn>(base_column);
@@ -121,5 +124,28 @@ std::vector<ChunkOffset> TableScan::TableScanImpl<T>::_eval_operator(
   }
   return chunk_offsets;
 }
+
+    template <typename T>
+    bool TableScan::TableScanImpl::_should_prune(const T &search_value,
+                                                 const std::shared_ptr<DictionaryColumn<T>> dictionary_column) {
+        dictionary_column->lower_bound(search_value);
+        dictionary_column->upper_bound(search_value);
+
+        // TODO based on _scan_type, decide whether chunk can be skipped
+
+        return false;
+    }
+
+    template <typename T>
+    std::vector<ChunkOffset> TableScan::TableScanImpl<T>::_eval_operator(
+        const T& search_value, const std::shared_ptr<DictionaryColumn<T>> dictionary_column,
+        const std::function<bool(const T&, const T&)> compare_function) const {
+        auto chunk_offsets = std::vector<ChunkOffset>{};
+
+        // TODO lower/upper bound, how to eval operator
+
+        return chunk_offsets;
+    }
+
 
 }  // namespace opossum
