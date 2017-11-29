@@ -12,8 +12,7 @@ std::shared_ptr<const Table> GetTable::_on_execute() {
   const auto& manager = StorageManager::get();
   Assert(manager.has_table(_table_name), "Invalid table name used in GetTable operator!");
 
-  _output = manager.get_table(_table_name);
-  return _output;
+  return manager.get_table(_table_name);
 }
 
 }  // namespace opossum

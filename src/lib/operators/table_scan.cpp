@@ -24,9 +24,7 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
 
   auto _impl = make_unique_by_column_type<BaseTableScanImpl, TableScanImpl>(column_type, in_table, _column_id,
                                                                             _scan_type, _search_value);
-
-  _output = _impl->on_execute();
-  return _output;
+  return _impl->on_execute();
 }
 
 template <typename T>
