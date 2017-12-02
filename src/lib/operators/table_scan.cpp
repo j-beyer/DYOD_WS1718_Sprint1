@@ -2,6 +2,7 @@
 
 #include "resolve_type.hpp"
 #include "storage/dictionary_column.hpp"
+#include "storage/fitted_attribute_vector.hpp"
 #include "storage/reference_column.hpp"
 #include "storage/table.hpp"
 #include "storage/value_column.hpp"
