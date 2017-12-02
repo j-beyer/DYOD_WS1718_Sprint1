@@ -42,7 +42,8 @@ std::shared_ptr<const Table> TableScan::TableScanImpl<T>::on_execute() {
 
   for (auto col_id = ColumnID{0}; col_id < _in_table->col_count(); ++col_id) {
     // add column definition
-    result_table->add_column_definition(_in_table->column_name(col_id), _in_table->column_type(col_id));
+    // TODO(team): is there a nicer way to combine add_column_definition and emplace_chunk ?
+    result_table->add_column(_in_table->column_name(col_id), _in_table->column_type(col_id));
 
     // create reference columns
     auto reference_column = std::make_shared<ReferenceColumn>(_in_table, col_id, _pos_list);
@@ -145,7 +146,7 @@ std::vector<ChunkOffset> TableScan::TableScanImpl<T>::_eval_operator(
   auto chunk_offsets = std::vector<ChunkOffset>{};
   // TODO can this be done as lambda?
   for (auto chunk_offset = ChunkOffset{0}; chunk_offset < values.size(); ++chunk_offset) {
-    if (compare_function(search_value, values[chunk_offset])) {
+    if (compare_function(values[chunk_offset], search_value)) {
       chunk_offsets.push_back(chunk_offset);
     }
   }
