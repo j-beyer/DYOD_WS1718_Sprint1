@@ -83,6 +83,8 @@ void TableScan::TableScanImpl<T>::_create_pos_list() {
     while(ref_target != nullptr){
       deref_column_id = ref_target->referenced_column_id();
 
+      // TODO : transitively update the ref_pos_list
+
       const auto& cur_chunk = ref_col->referenced_table()->get_chunk(ChunkID{0});
       ref_target = std::dynamic_pointer_cast<ReferenceColumn>(cur_chunk.get_column(deref_column_id));
 
