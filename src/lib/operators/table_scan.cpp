@@ -7,6 +7,8 @@
 #include "storage/table.hpp"
 #include "storage/value_column.hpp"
 
+#include "set"
+
 namespace opossum {
 
 TableScan::TableScan(const std::shared_ptr<const AbstractOperator> in, ColumnID column_id, const ScanType scan_type,
@@ -37,9 +39,10 @@ std::shared_ptr<const Table> TableScan::TableScanImpl<T>::on_execute() {
   // create PosList and fill with values from scan
   _create_pos_list();
 
-  // create chunk
+  // create chunk (we will have a single chunk for the results)
   auto chunk = Chunk{};
 
+  // Fill the chunk with reference columns to mirror the original relation
   for (auto col_id = ColumnID{0}; col_id < _in_table->col_count(); ++col_id) {
     // add column definition
     // TODO(team): is there a nicer way to combine add_column_definition and emplace_chunk ?
@@ -58,10 +61,36 @@ std::shared_ptr<const Table> TableScan::TableScanImpl<T>::on_execute() {
   return result_table;
 }
 
+// This function implements the actual scanning
 template <typename T>
 void TableScan::TableScanImpl<T>::_create_pos_list() {
+  // first we need to know which data type we are targeting
   T search_value = type_cast<T>(_search_value);
 
+  auto deref_column_id = _column_id;
+  std::set<RowID> ref_pos_list;
+
+  const auto& first_chunk = _in_table->get_chunk(ChunkID{0});
+
+  // precheck whether our input column is a reference column
+  auto ref_col = std::dynamic_pointer_cast<ReferenceColumn>(first_chunk.get_column(_column_id));
+  if (ref_col != nullptr){
+    ref_pos_list = std::set<RowID>(ref_col->pos_list()->begin(), ref_col->pos_list()->end());
+
+    const auto& cur_chunk = ref_col->referenced_table()->get_chunk(ChunkID{0});
+    std::shared_ptr<ReferenceColumn> ref_target = std::dynamic_pointer_cast<ReferenceColumn>(cur_chunk.get_column(deref_column_id));
+
+    while(ref_target != nullptr){
+      deref_column_id = ref_target->referenced_column_id();
+
+      const auto& cur_chunk = ref_col->referenced_table()->get_chunk(ChunkID{0});
+      ref_target = std::dynamic_pointer_cast<ReferenceColumn>(cur_chunk.get_column(deref_column_id));
+
+      continue;
+    }
+  }
+
+  // we need to look at the correct column in each chunk, switching for the actual type of the column
   for (auto chunk_id = ChunkID{0}; chunk_id < _in_table->chunk_count(); ++chunk_id) {
     const auto& chunk = _in_table->get_chunk(chunk_id);
     const auto base_column = chunk.get_column(_column_id);
@@ -71,7 +100,16 @@ void TableScan::TableScanImpl<T>::_create_pos_list() {
       const auto& values = value_column->values();
       const auto chunk_offsets = _eval_operator(search_value, values, _get_comparator());
       for (const auto chunk_offset : chunk_offsets) {
-        _pos_list->emplace_back(RowID{chunk_id, chunk_offset});
+          auto cur_id = RowID{chunk_id, chunk_offset};
+          // check whether we are running on a referenced column
+          if(deref_column_id != _column_id){
+              if(ref_pos_list.find(cur_id) != ref_pos_list.end()){
+                  _pos_list->push_back(cur_id);
+              }
+          }
+          else {
+              _pos_list->push_back(cur_id);
+          }
       }
       continue;
     }
@@ -81,15 +119,18 @@ void TableScan::TableScanImpl<T>::_create_pos_list() {
       if (!_should_prune(search_value, dictionary_column)) {
         const auto chunk_offsets = _eval_operator(search_value, dictionary_column);
         for (const auto chunk_offset : chunk_offsets) {
-          _pos_list->emplace_back(RowID{chunk_id, chunk_offset});
+            auto cur_id = RowID{chunk_id, chunk_offset};
+            // check whether we are running on a referenced column
+            if(deref_column_id != _column_id){
+                if(ref_pos_list.find(cur_id) != ref_pos_list.end()){
+                    _pos_list->push_back(cur_id);
+                }
+            }
+            else {
+                _pos_list->push_back(cur_id);
+            }
         }
       }
-      continue;
-    }
-
-    auto reference_column = std::dynamic_pointer_cast<ReferenceColumn>(base_column);
-    if (reference_column != nullptr) {
-      // TODO reuse pos_list?
       continue;
     }
 
@@ -153,6 +194,7 @@ std::vector<ChunkOffset> TableScan::TableScanImpl<T>::_eval_operator(
   return chunk_offsets;
 }
 
+// TODO: naming of this function is confusing
 template <typename T>
 bool TableScan::TableScanImpl<T>::_should_prune(const T& search_value,
                                                 const std::shared_ptr<DictionaryColumn<T>> dictionary_column) {
