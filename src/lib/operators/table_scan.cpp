@@ -179,7 +179,7 @@ bool TableScan::TableScanImpl<T>::_should_prune(const T& search_value,
       }
       break;
     case ScanType::OpNotEquals:
-      if (first == search_value || last == search_value) {
+      if (first == search_value && last == search_value) {
         return true;
       }
       break;
