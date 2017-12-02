@@ -24,7 +24,7 @@ class TableScan : public AbstractOperator {
   TableScan(const std::shared_ptr<const AbstractOperator> in, ColumnID column_id, const ScanType scan_type,
             const AllTypeVariant search_value);
 
-  ~TableScan();
+  ~TableScan() = default;
 
   ColumnID column_id() const;
   ScanType scan_type() const;
@@ -47,16 +47,17 @@ class TableScan : public AbstractOperator {
    protected:
     void _create_pos_list();
     std::function<bool(const T&, const T&)> _get_comparator() const;
+    std::function<bool(const ValueID, const ValueID)> _get_value_id_comparator() const;
     bool _should_prune(const T& search_value, const std::shared_ptr<DictionaryColumn<T>> dictionary_column);
     std::vector<ChunkOffset> _eval_operator(const T& search_value, const std::vector<T>& values,
                                             std::function<bool(const T&, const T&)> compare_function) const;
-    std::vector<ChunkOffset> _eval_operator(const T& search_value, const std::shared_ptr<DictionaryColumn<T>> dictionary_column,
-                                            std::function<bool(const T&, const T&)> compare_function) const;
+    std::vector<ChunkOffset> _eval_operator(const T& search_value,
+                                            const std::shared_ptr<DictionaryColumn<T>> dictionary_column) const;
 
     const std::shared_ptr<const Table> _in_table;
     ColumnID _column_id;
     const ScanType _scan_type;
-    const AllTypeVariant& _search_value;
+    const AllTypeVariant _search_value;
 
     std::shared_ptr<PosList> _pos_list;
   };
@@ -64,7 +65,7 @@ class TableScan : public AbstractOperator {
   const std::shared_ptr<const AbstractOperator> _in;
   ColumnID _column_id;
   const ScanType _scan_type;
-  const AllTypeVariant& _search_value;
+  const AllTypeVariant _search_value;
 };
 
 }  // namespace opossum
