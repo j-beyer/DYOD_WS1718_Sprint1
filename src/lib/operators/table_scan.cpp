@@ -1,3 +1,4 @@
+
 #include "table_scan.hpp"
 
 #include <set>

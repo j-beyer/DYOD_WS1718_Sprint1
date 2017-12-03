@@ -1,6 +1,9 @@
+
 #include "table_scan.hpp"
 
 #include <set>
+#include <utility>
+#include <vector>
 
 #include "resolve_type.hpp"
 #include "storage/dictionary_column.hpp"
@@ -14,18 +17,18 @@ namespace opossum {
 template <typename T>
 std::shared_ptr<const Table> TableScan::TableScanImpl<T>::on_execute() {
   // create table
-  // TODO be careful with the chunk size; what happens if we use infinite chunk size here, but add a chunk later?
+  // TODO(team): be careful with the chunk size; what happens if we use infinite chunk size here, but add a chunk later?
   auto result_table = std::make_shared<Table>();
 
   auto ref_col = std::dynamic_pointer_cast<ReferenceColumn>(_in_table->get_chunk(ChunkID{0}).get_column(_column_id));
 
-  //auto deref_column_id = _column_id;
+  // auto deref_column_id = _column_id;
   auto deref_table = _in_table;
   auto is_reference = false;
   if (ref_col != nullptr) {
     is_reference = true;
 
-    //deref_column_id = ref_col->referenced_column_id();
+    // deref_column_id = ref_col->referenced_column_id();
     deref_table = ref_col->referenced_table();
   }
 
