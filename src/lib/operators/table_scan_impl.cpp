@@ -22,7 +22,7 @@ std::shared_ptr<const Table> TableScan::TableScanImpl<T>::on_execute() {
   //auto deref_column_id = _column_id;
   auto deref_table = _in_table;
   auto is_reference = false;
-  if (ref_col != nullptr){
+  if (ref_col != nullptr) {
     is_reference = true;
 
     //deref_column_id = ref_col->referenced_column_id();
@@ -64,11 +64,11 @@ void TableScan::TableScanImpl<T>::_create_pos_list(bool is_reference) {
   auto deref_table = _in_table;
   std::set<RowID> ref_pos_set;
 
-  if(is_reference){
-      auto ref_col = std::dynamic_pointer_cast<ReferenceColumn>(_in_table->get_chunk(ChunkID{0}).get_column(_column_id));
-      ref_pos_set = std::set<RowID>(ref_col->pos_list()->begin(), ref_col->pos_list()->end());
-      deref_column_id = ref_col->referenced_column_id();
-      deref_table = ref_col->referenced_table();
+  if (is_reference) {
+    auto ref_col = std::dynamic_pointer_cast<ReferenceColumn>(_in_table->get_chunk(ChunkID{0}).get_column(_column_id));
+    ref_pos_set = std::set<RowID>(ref_col->pos_list()->begin(), ref_col->pos_list()->end());
+    deref_column_id = ref_col->referenced_column_id();
+    deref_table = ref_col->referenced_table();
   }
 
   // we need to look at the correct column in each chunk, switching for the actual type of the column
@@ -81,16 +81,15 @@ void TableScan::TableScanImpl<T>::_create_pos_list(bool is_reference) {
       const auto& values = value_column->values();
       const auto chunk_offsets = _eval_operator(search_value, values, _get_comparator());
       for (const auto chunk_offset : chunk_offsets) {
-          auto cur_id = RowID{chunk_id, chunk_offset};
-          // check whether we are running on a referenced column
-          if(deref_column_id != _column_id || deref_table != _in_table){
-              if(ref_pos_set.find(cur_id) != ref_pos_set.end()){
-                  _pos_list->push_back(cur_id);
-              }
+        auto cur_id = RowID{chunk_id, chunk_offset};
+        // check whether we are running on a referenced column
+        if (deref_column_id != _column_id || deref_table != _in_table) {
+          if (ref_pos_set.find(cur_id) != ref_pos_set.end()) {
+            _pos_list->push_back(cur_id);
           }
-          else {
-              _pos_list->push_back(cur_id);
-          }
+        } else {
+          _pos_list->push_back(cur_id);
+        }
       }
       continue;
     }
@@ -100,16 +99,15 @@ void TableScan::TableScanImpl<T>::_create_pos_list(bool is_reference) {
       if (!_should_prune(search_value, dictionary_column)) {
         const auto chunk_offsets = _eval_operator(search_value, dictionary_column);
         for (const auto chunk_offset : chunk_offsets) {
-            auto cur_id = RowID{chunk_id, chunk_offset};
-            // check whether we are running on a referenced column
-            if(deref_column_id != _column_id || deref_table != _in_table){
-                if(ref_pos_set.find(cur_id) != ref_pos_set.end()){
-                    _pos_list->push_back(cur_id);
-                }
+          auto cur_id = RowID{chunk_id, chunk_offset};
+          // check whether we are running on a referenced column
+          if (deref_column_id != _column_id || deref_table != _in_table) {
+            if (ref_pos_set.find(cur_id) != ref_pos_set.end()) {
+              _pos_list->push_back(cur_id);
             }
-            else {
-                _pos_list->push_back(cur_id);
-            }
+          } else {
+            _pos_list->push_back(cur_id);
+          }
         }
       }
       continue;

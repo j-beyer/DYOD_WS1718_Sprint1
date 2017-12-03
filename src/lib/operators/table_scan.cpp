@@ -9,7 +9,6 @@
 #include "storage/table.hpp"
 #include "storage/value_column.hpp"
 
-
 namespace opossum {
 
 TableScan::TableScan(const std::shared_ptr<const AbstractOperator> in, ColumnID column_id, const ScanType scan_type,
