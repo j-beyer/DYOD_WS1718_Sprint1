@@ -82,7 +82,7 @@ void TableScan::TableScanImpl<T>::_create_pos_list(bool is_reference) {
     auto value_column = std::dynamic_pointer_cast<ValueColumn<T>>(base_column);
     if (value_column != nullptr) {
       const auto& values = value_column->values();
-      const auto chunk_offsets = _eval_operator(search_value, values, _get_comparator());
+      const auto chunk_offsets = _eval_operator(search_value, values, _get_comparator<T>());
       for (const auto chunk_offset : chunk_offsets) {
         auto cur_id = RowID{chunk_id, chunk_offset};
         // check whether we are running on a referenced column
@@ -121,42 +121,23 @@ void TableScan::TableScanImpl<T>::_create_pos_list(bool is_reference) {
     throw std::runtime_error("Invalid column type or subclass!");
   }
 }
-// TODO define alias for std::function<bool(const T&, const T&)> with using
-template <typename T>
-std::function<bool(const T&, const T&)> TableScan::TableScanImpl<T>::_get_comparator() const {
-  switch (_scan_type) {
-    case ScanType::OpEquals:
-      return [](T t1, T t2) { return t1 == t2; };
-    case ScanType::OpNotEquals:
-      return [](T t1, T t2) { return t1 != t2; };
-    case ScanType::OpLessThan:
-      return [](T t1, T t2) { return t1 < t2; };
-    case ScanType::OpLessThanEquals:
-      return [](T t1, T t2) { return t1 <= t2; };
-    case ScanType::OpGreaterThan:
-      return [](T t1, T t2) { return t1 > t2; };
-    case ScanType::OpGreaterThanEquals:
-      return [](T t1, T t2) { return t1 >= t2; };
-    default:
-      throw std::runtime_error("Invalid scan type!");
-  }
-}
 
 template <typename T>
-std::function<bool(const ValueID, const ValueID)> TableScan::TableScanImpl<T>::_get_value_id_comparator() const {
+template <typename C>
+Comparator<C> TableScan::TableScanImpl<T>::_get_comparator() const {
   switch (_scan_type) {
     case ScanType::OpEquals:
-      return [](ValueID t1, ValueID t2) { return t1 == t2; };
+      return [](C c1, C c2) { return c1 == c2; };
     case ScanType::OpNotEquals:
-      return [](ValueID t1, ValueID t2) { return t1 != t2; };
+      return [](C c1, C c2) { return c1 != c2; };
     case ScanType::OpLessThan:
-      return [](ValueID t1, ValueID t2) { return t1 < t2; };
+      return [](C c1, C c2) { return c1 < c2; };
     case ScanType::OpLessThanEquals:
-      return [](ValueID t1, ValueID t2) { return t1 <= t2; };
+      return [](C c1, C c2) { return c1 <= c2; };
     case ScanType::OpGreaterThan:
-      return [](ValueID t1, ValueID t2) { return t1 > t2; };
+      return [](C c1, C c2) { return c1 > c2; };
     case ScanType::OpGreaterThanEquals:
-      return [](ValueID t1, ValueID t2) { return t1 >= t2; };
+      return [](C c1, C c2) { return c1 >= c2; };
     default:
       throw std::runtime_error("Invalid scan type!");
   }
@@ -223,7 +204,7 @@ std::vector<ChunkOffset> TableScan::TableScanImpl<T>::_eval_operator(
 
   const auto contains_value = (lower_id != INVALID_VALUE_ID && lower_id != upper_id);
 
-  const auto compare_function = _get_value_id_comparator();
+  const auto compare_function = _get_comparator<ValueID>();
 
   const auto attribute_vector = dictionary_column->attribute_vector();
 
