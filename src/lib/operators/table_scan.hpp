@@ -48,7 +48,7 @@ class TableScan : public AbstractOperator {
     void _create_pos_list(bool is_reference);
     template <typename C>
     Comparator<C> _get_comparator() const;
-    bool _should_prune(const T& search_value, const std::shared_ptr<DictionaryColumn<T>> dictionary_column);
+    bool _should_prune_chunk(const T& search_value, const std::shared_ptr<DictionaryColumn<T>> dictionary_column);
     std::vector<ChunkOffset> _eval_operator(const T& search_value, const std::vector<T>& values,
                                             std::function<bool(const T&, const T&)> compare_function) const;
     std::vector<ChunkOffset> _eval_operator(const T& search_value,

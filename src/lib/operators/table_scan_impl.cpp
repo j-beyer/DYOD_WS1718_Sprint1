@@ -16,19 +16,17 @@ namespace opossum {
 
 template <typename T>
 std::shared_ptr<const Table> TableScan::TableScanImpl<T>::on_execute() {
-  // create table
-  // TODO(team): be careful with the chunk size; what happens if we use infinite chunk size here, but add a chunk later?
+  // create output table
   auto result_table = std::make_shared<Table>();
 
-  auto ref_col = std::dynamic_pointer_cast<ReferenceColumn>(_in_table->get_chunk(ChunkID{0}).get_column(_column_id));
-
-  // auto deref_column_id = _column_id;
+  // check if the input already contains reference columns (e.g., already was a scan)
   auto deref_table = _in_table;
   auto is_reference = false;
-  if (ref_col != nullptr) {
-    is_reference = true;
 
-    // deref_column_id = ref_col->referenced_column_id();
+  auto ref_col = std::dynamic_pointer_cast<ReferenceColumn>(_in_table->get_chunk(ChunkID{0}).get_column(_column_id));
+  if (ref_col != nullptr) {
+    // if the input contains reference columns, dereference them
+    is_reference = true;
     deref_table = ref_col->referenced_table();
   }
 
@@ -68,6 +66,7 @@ void TableScan::TableScanImpl<T>::_create_pos_list(bool is_reference) {
   std::set<RowID> ref_pos_set;
 
   if (is_reference) {
+    // if the input table contains reference columns, access the referenced table instead
     auto ref_col = std::dynamic_pointer_cast<ReferenceColumn>(_in_table->get_chunk(ChunkID{0}).get_column(_column_id));
     ref_pos_set = std::set<RowID>(ref_col->pos_list()->begin(), ref_col->pos_list()->end());
     deref_column_id = ref_col->referenced_column_id();
@@ -79,46 +78,43 @@ void TableScan::TableScanImpl<T>::_create_pos_list(bool is_reference) {
     const auto& chunk = deref_table->get_chunk(chunk_id);
     const auto base_column = chunk.get_column(deref_column_id);
 
+    auto chunk_offsets = std::vector<ChunkOffset>{};
+
+    /*
+     * we only check for ValueColumn and DictionaryColumn here,
+     * because we dereference ReferenceColumns to work on their underlying columns,
+     * which, in turn, can only be ValueColumns or DictionaryColumns again
+     */
     auto value_column = std::dynamic_pointer_cast<ValueColumn<T>>(base_column);
     if (value_column != nullptr) {
       const auto& values = value_column->values();
-      const auto chunk_offsets = _eval_operator(search_value, values, _get_comparator<T>());
-      for (const auto chunk_offset : chunk_offsets) {
-        auto cur_id = RowID{chunk_id, chunk_offset};
-        // check whether we are running on a referenced column
-        if (deref_column_id != _column_id || deref_table != _in_table) {
-          if (ref_pos_set.find(cur_id) != ref_pos_set.end()) {
-            _pos_list->push_back(cur_id);
-          }
-        } else {
-          _pos_list->push_back(cur_id);
-        }
-      }
-      continue;
+      chunk_offsets = _eval_operator(search_value, values, _get_comparator<T>());
     }
 
     auto dictionary_column = std::dynamic_pointer_cast<DictionaryColumn<T>>(base_column);
     if (dictionary_column != nullptr) {
-      if (!_should_prune(search_value, dictionary_column)) {
-        const auto chunk_offsets = _eval_operator(search_value, dictionary_column);
-        for (const auto chunk_offset : chunk_offsets) {
-          auto cur_id = RowID{chunk_id, chunk_offset};
-          // check whether we are running on a referenced column
-          if (deref_column_id != _column_id || deref_table != _in_table) {
-            if (ref_pos_set.find(cur_id) != ref_pos_set.end()) {
-              _pos_list->push_back(cur_id);
-            }
-          } else {
-            _pos_list->push_back(cur_id);
-          }
-        }
+      if (!_should_prune_chunk(search_value, dictionary_column)) {
+        chunk_offsets = _eval_operator(search_value, dictionary_column);
       }
-      continue;
     }
 
-    // either the search value type does not match the column type,
-    // or we are dealing with another column subclass that we do not know of yet
-    throw std::runtime_error("Invalid column type or subclass!");
+    for (const auto chunk_offset : chunk_offsets) {
+      auto cur_id = RowID{chunk_id, chunk_offset};
+
+      if (is_reference) {
+        /*
+         * only include values in the result that were also referenced from the previous operation
+         * we basically scan the entire table again and only include values that are also included
+         * in the input PosList
+         * this might not be very efficient, but increases readability for now
+         */
+        if (ref_pos_set.find(cur_id) != ref_pos_set.end()) {
+          _pos_list->push_back(cur_id);
+        }
+      } else {
+        _pos_list->push_back(cur_id);
+      }
+    }
   }
 }
 
@@ -148,7 +144,6 @@ std::vector<ChunkOffset> TableScan::TableScanImpl<T>::_eval_operator(
     const T& search_value, const std::vector<T>& values,
     const std::function<bool(const T&, const T&)> compare_function) const {
   auto chunk_offsets = std::vector<ChunkOffset>{};
-  // TODO can this be done as lambda?
   for (auto chunk_offset = ChunkOffset{0}; chunk_offset < values.size(); ++chunk_offset) {
     if (compare_function(values[chunk_offset], search_value)) {
       chunk_offsets.push_back(chunk_offset);
@@ -157,10 +152,9 @@ std::vector<ChunkOffset> TableScan::TableScanImpl<T>::_eval_operator(
   return chunk_offsets;
 }
 
-// TODO: naming of this function is confusing
 template <typename T>
-bool TableScan::TableScanImpl<T>::_should_prune(const T& search_value,
-                                                const std::shared_ptr<DictionaryColumn<T>> dictionary_column) {
+bool TableScan::TableScanImpl<T>::_should_prune_chunk(const T& search_value,
+                                                      const std::shared_ptr<DictionaryColumn<T>> dictionary_column) {
   const auto dictionary = dictionary_column->dictionary();
   const T& first = (*dictionary)[0];
   const T& last = (*dictionary)[dictionary->size() - 1];
