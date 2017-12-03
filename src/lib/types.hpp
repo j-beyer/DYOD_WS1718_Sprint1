@@ -55,6 +55,9 @@ enum class ScanType { OpEquals, OpNotEquals, OpLessThan, OpLessThanEquals, OpGre
 
 using PosList = std::vector<RowID>;
 
+template <typename T>
+using Comparator = std::function<bool(const T&, const T&)>;
+
 class Noncopyable {
  protected:
   Noncopyable() = default;
