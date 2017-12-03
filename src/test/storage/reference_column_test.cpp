@@ -41,7 +41,7 @@ class ReferenceColumnTest : public ::testing::Test {
     StorageManager::get().add_table("test_table_dict", _test_table_dict);
   }
 
-  // TODO remove once fixed in upstream
+  // TODO(team) remove once fixed in upstream
   void TearDown() override { StorageManager::reset(); }
 
  public:
