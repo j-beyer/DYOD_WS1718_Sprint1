@@ -36,20 +36,32 @@ std::shared_ptr<const Table> TableScan::TableScanImpl<T>::on_execute() {
   // TODO be careful with the chunk size; what happens if we use infinite chunk size here, but add a chunk later?
   auto result_table = std::make_shared<Table>();
 
+  auto ref_col = std::dynamic_pointer_cast<ReferenceColumn>(_in_table->get_chunk(ChunkID{0}).get_column(_column_id));
+
+  //auto deref_column_id = _column_id;
+  auto deref_table = _in_table;
+  auto is_reference = false;
+  if (ref_col != nullptr){
+    is_reference = true;
+
+    //deref_column_id = ref_col->referenced_column_id();
+    deref_table = ref_col->referenced_table();
+  }
+
   // create PosList and fill with values from scan
-  _create_pos_list();
+  _create_pos_list(is_reference);
 
   // create chunk (we will have a single chunk for the results)
   auto chunk = Chunk{};
 
   // Fill the chunk with reference columns to mirror the original relation
-  for (auto col_id = ColumnID{0}; col_id < _in_table->col_count(); ++col_id) {
+  for (auto col_id = ColumnID{0}; col_id < deref_table->col_count(); ++col_id) {
     // add column definition
     // TODO(team): is there a nicer way to combine add_column_definition and emplace_chunk ?
-    result_table->add_column(_in_table->column_name(col_id), _in_table->column_type(col_id));
+    result_table->add_column(deref_table->column_name(col_id), deref_table->column_type(col_id));
 
     // create reference columns
-    auto reference_column = std::make_shared<ReferenceColumn>(_in_table, col_id, _pos_list);
+    auto reference_column = std::make_shared<ReferenceColumn>(deref_table, col_id, _pos_list);
 
     // add column to chunk
     chunk.add_column(reference_column);
@@ -63,39 +75,25 @@ std::shared_ptr<const Table> TableScan::TableScanImpl<T>::on_execute() {
 
 // This function implements the actual scanning
 template <typename T>
-void TableScan::TableScanImpl<T>::_create_pos_list() {
+void TableScan::TableScanImpl<T>::_create_pos_list(bool is_reference) {
   // first we need to know which data type we are targeting
   T search_value = type_cast<T>(_search_value);
 
   auto deref_column_id = _column_id;
-  std::set<RowID> ref_pos_list;
+  auto deref_table = _in_table;
+  std::set<RowID> ref_pos_set;
 
-  const auto& first_chunk = _in_table->get_chunk(ChunkID{0});
-
-  // precheck whether our input column is a reference column
-  auto ref_col = std::dynamic_pointer_cast<ReferenceColumn>(first_chunk.get_column(_column_id));
-  if (ref_col != nullptr){
-    ref_pos_list = std::set<RowID>(ref_col->pos_list()->begin(), ref_col->pos_list()->end());
-
-    const auto& cur_chunk = ref_col->referenced_table()->get_chunk(ChunkID{0});
-    std::shared_ptr<ReferenceColumn> ref_target = std::dynamic_pointer_cast<ReferenceColumn>(cur_chunk.get_column(deref_column_id));
-
-    while(ref_target != nullptr){
-      deref_column_id = ref_target->referenced_column_id();
-
-      // TODO : transitively update the ref_pos_list
-
-      const auto& cur_chunk = ref_col->referenced_table()->get_chunk(ChunkID{0});
-      ref_target = std::dynamic_pointer_cast<ReferenceColumn>(cur_chunk.get_column(deref_column_id));
-
-      continue;
-    }
+  if(is_reference){
+      auto ref_col = std::dynamic_pointer_cast<ReferenceColumn>(_in_table->get_chunk(ChunkID{0}).get_column(_column_id));
+      ref_pos_set = std::set<RowID>(ref_col->pos_list()->begin(), ref_col->pos_list()->end());
+      deref_column_id = ref_col->referenced_column_id();
+      deref_table = ref_col->referenced_table();
   }
 
   // we need to look at the correct column in each chunk, switching for the actual type of the column
-  for (auto chunk_id = ChunkID{0}; chunk_id < _in_table->chunk_count(); ++chunk_id) {
-    const auto& chunk = _in_table->get_chunk(chunk_id);
-    const auto base_column = chunk.get_column(_column_id);
+  for (auto chunk_id = ChunkID{0}; chunk_id < deref_table->chunk_count(); ++chunk_id) {
+    const auto& chunk = deref_table->get_chunk(chunk_id);
+    const auto base_column = chunk.get_column(deref_column_id);
 
     auto value_column = std::dynamic_pointer_cast<ValueColumn<T>>(base_column);
     if (value_column != nullptr) {
@@ -104,8 +102,8 @@ void TableScan::TableScanImpl<T>::_create_pos_list() {
       for (const auto chunk_offset : chunk_offsets) {
           auto cur_id = RowID{chunk_id, chunk_offset};
           // check whether we are running on a referenced column
-          if(deref_column_id != _column_id){
-              if(ref_pos_list.find(cur_id) != ref_pos_list.end()){
+          if(deref_column_id != _column_id || deref_table != _in_table){
+              if(ref_pos_set.find(cur_id) != ref_pos_set.end()){
                   _pos_list->push_back(cur_id);
               }
           }
@@ -123,8 +121,8 @@ void TableScan::TableScanImpl<T>::_create_pos_list() {
         for (const auto chunk_offset : chunk_offsets) {
             auto cur_id = RowID{chunk_id, chunk_offset};
             // check whether we are running on a referenced column
-            if(deref_column_id != _column_id){
-                if(ref_pos_list.find(cur_id) != ref_pos_list.end()){
+            if(deref_column_id != _column_id || deref_table != _in_table){
+                if(ref_pos_set.find(cur_id) != ref_pos_set.end()){
                     _pos_list->push_back(cur_id);
                 }
             }

@@ -45,7 +45,7 @@ class TableScan : public AbstractOperator {
     std::shared_ptr<const Table> on_execute() override;
 
    protected:
-    void _create_pos_list();
+    void _create_pos_list(bool is_reference);
     std::function<bool(const T&, const T&)> _get_comparator() const;
     std::function<bool(const ValueID, const ValueID)> _get_value_id_comparator() const;
     bool _should_prune(const T& search_value, const std::shared_ptr<DictionaryColumn<T>> dictionary_column);
